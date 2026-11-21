@@ -35,8 +35,20 @@ One meal that a user confirmed, from a recognition or by manual input. Only meal
 _Avoid_: Record, log, meal
 
 **Food Item**:
-One food in a meal entry or a recognition, with a name, grams, and nutrients that come from the nutrition database.
-_Avoid_: Dish, ingredient (unless the food is one ingredient)
+One dish or food in a meal entry or a recognition, with a name and one or more ingredients. Its grams and nutrients are the sum of its ingredients.
+_Avoid_: Dish (in code), product
+
+**Ingredient**:
+One food inside a dish in a recognition or a meal entry, with grams. Cooking oil is an ingredient. Nutrients come from the nutrition database per ingredient.
+_Avoid_: Component, part
+
+**Meal Type**:
+Breakfast, lunch, dinner, or snack. The app sets it from the local eaten time, and the user can change it.
+_Avoid_: Meal slot, category
+
+**Entry Date**:
+The local date of a meal entry, from its eaten time and the device UTC offset at that time. Daily totals group by entry date.
+_Avoid_: Day, log date
 
 **Recognition Quota**:
 The maximum number of recognitions that one user can request in one day. Manual input has no quota.
