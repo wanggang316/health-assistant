@@ -1105,7 +1105,7 @@ Review, Food item editor, and Food search are presented as a sheet stack over th
   backups/                        # pre-migration copies, last 5, not in shared/
 ```
 
-Port: `127.0.0.1:<port>`. **TODO**: choose a free port from `check.py inventory` (placeholder 3140). **TODO**: confirm VM CPU architecture (build assumes `linux/amd64`).
+Port: `127.0.0.1:3140`. The VM is x86_64, so the build is `linux/amd64`.
 
 ### 10.2 systemd unit `health-assistant-api.service`
 
@@ -1152,7 +1152,7 @@ health-api.gumpw.com {
 }
 ```
 
-DNS: Cloudflare A record `health-api.gumpw.com` → VM, DNS only, comment `nanops:health-assistant`. **TODO**: create. **TODO**: confirm that the Caddy access log redacts the `Authorization` header in the installed Caddy version.
+DNS: Cloudflare A record `health-api.gumpw.com` → VM, DNS only, comment `nanops:health-assistant` (created 2026-11-23). **TODO**: confirm that the Caddy access log redacts the `Authorization` header in the installed Caddy version.
 
 ### 10.4 Environment variables (names only)
 
@@ -1291,7 +1291,7 @@ The profile expires 2027-11-19 and the certificate 2027-11-18; the lane blocks o
 5. **GoogleSignIn 10.1.0 nonce API**: exact method signature. **TODO**.
 6. **modernc FTS5**: **Done**: FTS5 is compiled in (`TestFTS5Available`).
 7. **FDC details**: **Done**: see `datasets.lock` and §7.1.
-8. **Port and CPU architecture** of the VM; DNS record for `health-api.gumpw.com`. **TODO**.
+8. **Port and CPU architecture**: **Done**: port 3140 (free in `check.py inventory`), VM is x86_64 (`linux/amd64` build). DNS A record `health-api.gumpw.com` created (DNS only, comment `nanops:health-assistant`).
 9. **Go module path**: **Done**: `github.com/wanggang316/health-assistant/server`.
 10. **Unconfirmed recognitions**: proposal is to delete them and their photos after 7 days. They are not evaluation pairs. **Decided (2026-11-22): delete after 7 days.**
 11. **Data in backups after deletion**: `health.db` backups keep deleted users for up to 30 days. Needs a statement in the privacy policy. The photo bucket has versioning off (checked on 2026-11-22), so a delete removes the object.
