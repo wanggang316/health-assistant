@@ -1,0 +1,87 @@
+name: server-deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server/**"
+      - "docs/api/fixtures/**"
+      - ".github/workflows/server-deploy.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-health-assistant
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+      - name: Restore FDC downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/fdc
+          key: fdc-${{ hashFiles('server/internal/nutrition/datasets.lock') }}
+      - name: Build nutrition.db
+        run: go run ./cmd/fdcimport -cache ~/.cache/fdc -out nutrition.db
+      - name: Test
+        run: NUTRITION_DB=$PWD/nutrition.db go test -race ./...
+      - name: Build binary
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "-s -w -X main.version=${{ github.sha }}" -o health-api ./cmd/health-api
+      - name: Assemble release
+        id: meta
+        run: |
+          set -euxo pipefail
+          B=/tmp/release
+          rm -rf "$B" && mkdir -p "$B/deploy"
+          cp health-api nutrition.db "$B/"
+          cp deploy/health-assistant-api.service deploy/health-assistant.caddy deploy/activate.sh deploy/healthcheck "$B/deploy/"
+          echo "${{ github.sha }}" > "$B/SHA"
+          date -u +%Y-%m-%dT%H:%M:%SZ > "$B/BUILT_AT"
+          tar -czf /tmp/health-assistant-release.tgz -C "$B" .
+          echo "release_name=$(date -u +%Y%m%d-%H%M%S)-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Copy release to VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: /tmp/health-assistant-release.tgz
+          target: /tmp/
+          strip_components: 1
+      - name: Activate release
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 5m
+          script_stop: true
+          script: |
+            set -euo pipefail
+            install -d -m 755 /opt/health-assistant/bin
+            tar -xzOf /tmp/health-assistant-release.tgz ./deploy/activate.sh > /opt/health-assistant/bin/activate.sh
+            chmod 755 /opt/health-assistant/bin/activate.sh
+            bash /opt/health-assistant/bin/activate.sh /tmp/health-assistant-release.tgz "${{ steps.meta.outputs.release_name }}"
+      - name: Check public health
+        working-directory: .
+        run: |
+          for i in $(seq 1 20); do
+            if curl -fsS https://health-api.gumpw.com/healthz | grep -q '"version":"${{ github.sha }}"'; then
+              echo "live"; exit 0
+            fi
+            sleep 3
+          done
+          echo "public health check failed"; exit 1

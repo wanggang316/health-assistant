@@ -1,0 +1,4 @@
+# nanops-monitor health probes: <name> <url> [<expected-status>]
+# Read on the VM from /opt/health-assistant/current/deploy/healthcheck.
+api         http://127.0.0.1:3140/healthz
+api-public  https://health-api.gumpw.com/healthz

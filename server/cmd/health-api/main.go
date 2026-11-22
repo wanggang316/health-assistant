@@ -121,7 +121,7 @@ func serve(cfg config.Config, log *slog.Logger) error {
 			DB: nut, Cache: st, Log: log,
 			Picker: &recognition.GeminiPicker{Gemini: gem, Model: cfg.GeminiTextModel, Usage: st},
 		},
-		Alerter:    &alert.Feishu{URL: cfg.FeishuAlertWebhook, Log: log},
+		Alerter:    &alert.Feishu{URL: cfg.FeishuAlertWebhook, Secret: cfg.FeishuAlertSecret, Log: log},
 		QuotaLimit: cfg.RecognitionDailyQuota, GlobalLimit: cfg.RecognitionGlobalDailyLimit,
 		Log: log, Now: time.Now,
 	}
