@@ -1,0 +1,44 @@
+# External setup
+
+This file lists the external accounts and resources that the project uses. It contains no secrets. Secrets stay in local files outside the repository and in CI secrets.
+
+## Apple
+
+| Item | Value |
+|---|---|
+| Team | `HC438T2B8P` |
+| Bundle ID | `com.gumpw.health-assistant` (capability: Sign in with Apple) |
+| App Store Connect app | "Gump Health Assistant", Apple ID `6837908331`, SKU `health-assistant`, primary language Chinese (Simplified) |
+| App Store profile | `health-assistant AppStore` (`TPA3M32W6Z`), expires 2027-11-19 |
+| Distribution certificate | `SRH6U6PUU9`, expires 2027-11-18 (shared with trlm) |
+| TestFlight internal group | `Internal`, access to all builds |
+
+The app name "Health Assistant" is used by another developer. "Gump Health Assistant" is a working name; change it before App Store release.
+
+Local material: `~/.config/appstoreconnect/` (shared API key) and `~/.config/appstoreconnect/ios/projects/health-assistant/` (profile). The shared API key cannot register bundle IDs, create profiles, or create apps; do these in the web portal.
+
+## Google Cloud
+
+| Item | Value |
+|---|---|
+| Project | `health-assistant-515506` (number `425467050521`) |
+| Gemini access | Vertex AI express mode API key, endpoint `https://aiplatform.googleapis.com/v1/publishers/google/models/<model>:generateContent` |
+| Models checked on 2026-11-22 | `gemini-3.8-flash`, `gemini-3.1-flash-lite` |
+
+The key is `GEMINI_API_KEY` in `~/.config/secrets.env`. It is restricted to the Vertex AI API, so the Gemini Developer API endpoint returns 403 with it.
+
+## AWS
+
+| Item | Value |
+|---|---|
+| Meal photo bucket | `health-assistant-prod-a7fe63` (`us-east-1`), private, SSE-S3 |
+| Backend IAM user | `health-assistant-prod-s3`, object read, write, and delete on that bucket only |
+
+Credentials: `~/.config/aws/s3/health-assistant-prod-s3.env`.
+
+## Server
+
+| Item | Value |
+|---|---|
+| API domain | `health-api.gumpw.com` |
+| Host | nanops VM (DigitalOcean) |
