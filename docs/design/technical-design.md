@@ -777,7 +777,7 @@ Facts verified on 2026-11-22:
 - The [`GenerationConfig` reference](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/reference/rest/v1/GenerationConfig) marks `responseMimeType`, `responseSchema`, and `responseJsonSchema` as deprecated in favor of `responseFormat: [{"text": {"mimeType": "APPLICATION_JSON", "schema": {...}}}]`. No removal date is given. `responseJsonSchema` and `responseSchema` are mutually exclusive.
 - `thinkingConfig.thinkingLevel` accepts `MINIMAL`, `LOW`, `MEDIUM`, `HIGH`, `XHIGH`. `mediaResolution` accepts `LOW`, `MEDIUM`, `HIGH`.
 
-Decision: the `gemini` package has one request builder. The first spike tests `responseFormat` on the express endpoint with both models. If it works, use it; else use `responseMimeType` + `responseSchema` (works today). **TODO**: record the result. The backend always validates the output itself (§6.4), so the choice does not change correctness.
+Decision: the `gemini` package has one request builder. The first spike tests `responseFormat` on the express endpoint with both models. If it works, use it; else use `responseMimeType` + `responseSchema` (works today). Result (2026-11-22): `responseFormat` works on the express endpoint with both models; the backend uses it. The recognition schema with `minItems`/`maxItems` returned `400 INVALID_ARGUMENT` with both fields, so the schema leaves out item counts and Go checks them. The backend always validates the output itself (§6.4), so the choice does not change correctness.
 
 Parameters to tune on the evaluation set (§12.3), not guessed now: `thinkingLevel` (`MINIMAL` vs `LOW`), `mediaResolution` (unset vs `MEDIUM`). Temperature stays at the model default. **TODO**: confirm Google's current guidance for temperature on Gemini 3.x.
 
@@ -801,7 +801,7 @@ The user turn has the image, the local time, the weekday, and the suggested meal
 
 ### 6.4 Output schema
 
-Sent as `responseSchema` (OpenAPI subset) and validated again in Go with the equivalent JSON Schema:
+Sent as the `responseFormat` schema (OpenAPI subset, without `minItems`/`maxItems`, see §6.2) and validated again in Go by `recognition.Parse` (hand-written checks, no JSON Schema library):
 
 ```json
 {
@@ -901,7 +901,7 @@ Decision: **no USDA API calls at runtime.** `cmd/fdcimport` reads the pinned JSO
 
 Input: `name_en` and `name_zh` from the model. Steps, stop at the first hit:
 
-1. **Alias** — exact match of the normalized `name_zh` or `name_en` in `aliases`. `server/nutrition/aliases.csv` is curated by hand: common Chinese ingredients and oils, sauces, staples (start with about 300 rows from the first evaluation runs). Normalization: NFKC, lower case, trim, collapse spaces, remove punctuation.
+1. **Alias** — exact match of the normalized `name_en`, then `name_zh` (each part of a name like `油菜/青菜`), in `aliases`. English first, because the model writes the cooked state there ("egg, scrambled") while the Chinese name is often only the food ("鸡蛋"). `server/nutrition/aliases.csv` is curated by hand: common Chinese ingredients and oils, sauces, staples (start with about 300 rows from the first evaluation runs). Normalization: NFKC, lower case, trim, collapse spaces, remove punctuation.
 2. **Cache** — `ingredient_matches` by normalized `name_en` (results of earlier model picks for the same `nutrition_version`).
 3. **Candidates** — FTS5 query on `foods_fts` with the `name_en` words (BM25), top 8, with a rank bonus for Foundation > SR Legacy > FNDDS and for state words that match ("raw", "cooked", "boiled", "fried").
 4. **Model pick** — one `gemini-3.1-flash-lite` call per recognition for all unresolved ingredients. The response schema is built per request: an object with one property per ingredient (`i0`, `i1`, …), each an `enum` of its candidate `fdc_id` strings plus `"none"`. The model can only choose a candidate ID (research report §4.2, step 3). The pick is written to `ingredient_matches`.
@@ -1286,7 +1286,7 @@ The profile expires 2027-11-19 and the certificate 2027-11-18; the lane blocks o
 
 1. **Sign in with Apple key not created.** Needs a `.p8` key with Sign in with Apple for `com.gumpw.health-assistant`, its Key ID, and a project-env PR. Without it, token revocation on account deletion (App Store requirement) cannot work. **Done (2026-11-22)**: Key ID `X9UM3BZKR3`; see `docs/external-setup.md`. The project-env PR is still to do.
 2. **Apple server-to-server notification endpoint**: where to set it for an App ID without a Services ID. **TODO**.
-3. **Structured output field on the express endpoint**: `responseFormat` (new) vs `responseMimeType` + `responseSchema` (deprecated, documented). Spike in the first backend PR.
+3. **Structured output field on the express endpoint**: **Done**: `responseFormat` works (§6.2).
 4. **Gemini parameters**: `thinkingLevel`, `mediaResolution`, temperature guidance for Gemini 3.x. Decide on the evaluation set.
 5. **GoogleSignIn 10.1.0 nonce API**: exact method signature. **TODO**.
 6. **modernc FTS5**: **Done**: FTS5 is compiled in (`TestFTS5Available`).

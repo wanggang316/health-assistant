@@ -1,0 +1,53 @@
+{
+  "id": "0193a1b2-7c3d-7e4f-8a9b-0c1d2e3f4a60",
+  "status": "succeeded",
+  "is_food": true,
+  "photo_url": "https://health-assistant-prod-a7fe63.s3.us-east-1.amazonaws.com/meal-photos/u/p.jpg?X-Amz-Expires=900",
+  "suggested_meal_type": "lunch",
+  "food_items": [
+    {
+      "name_zh": "番茄炒蛋",
+      "name_en": "Tomato and egg stir-fry",
+      "cooking_method": "stir_fried",
+      "confidence": 0.86,
+      "model_kcal": 260,
+      "needs_gram_check": false,
+      "ingredients": [
+        {
+          "name_zh": "番茄",
+          "name_en": "tomato, raw",
+          "grams": 150,
+          "is_cooking_oil": false,
+          "food": {
+            "fdc_id": 170457,
+            "description": "Tomatoes, red, ripe, raw, year round average",
+            "per_100g": { "kcal": 18, "protein_g": 0.9, "fat_g": 0.2, "carb_g": 3.9, "fiber_g": 1.2, "sodium_mg": 5 }
+          },
+          "nutrients": { "kcal": 27, "protein_g": 1.3, "fat_g": 0.3, "carb_g": 5.8, "fiber_g": 1.8, "sodium_mg": 7.5 },
+          "match_method": "alias",
+          "candidates": []
+        },
+        {
+          "name_zh": "炒蛋",
+          "name_en": "egg, scrambled",
+          "grams": 100,
+          "is_cooking_oil": false,
+          "food": null,
+          "nutrients": null,
+          "match_method": null,
+          "candidates": [
+            {
+              "fdc_id": 172188,
+              "description": "Egg, whole, cooked, scrambled",
+              "per_100g": { "kcal": 149, "protein_g": 10, "fat_g": 11, "carb_g": 1.6, "fiber_g": 0, "sodium_mg": 145 }
+            }
+          ]
+        }
+      ],
+      "nutrients": { "kcal": 115.4, "protein_g": 1.3, "fat_g": 10.3, "carb_g": 5.8, "fiber_g": 1.8, "sodium_mg": 7.5 }
+    }
+  ],
+  "nutrients": { "kcal": 115.4, "protein_g": 1.3, "fat_g": 10.3, "carb_g": 5.8, "fiber_g": 1.8, "sodium_mg": 7.5 },
+  "meal_entry_id": null,
+  "recognition_quota": { "limit": 30, "used": 5, "resets_at": "2026-11-22T16:00:00Z" }
+}

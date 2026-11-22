@@ -15,10 +15,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/wanggang316/health-assistant/server/internal/alert"
 	"github.com/wanggang316/health-assistant/server/internal/auth"
 	"github.com/wanggang316/health-assistant/server/internal/config"
+	"github.com/wanggang316/health-assistant/server/internal/gemini"
 	"github.com/wanggang316/health-assistant/server/internal/httpapi"
+	"github.com/wanggang316/health-assistant/server/internal/jobs"
 	"github.com/wanggang316/health-assistant/server/internal/nutrition"
+	"github.com/wanggang316/health-assistant/server/internal/photo"
+	"github.com/wanggang316/health-assistant/server/internal/recognition"
 	"github.com/wanggang316/health-assistant/server/internal/store"
 )
 
@@ -103,10 +108,27 @@ func serve(cfg config.Config, log *slog.Logger) error {
 		Log:      log,
 		Now:      time.Now,
 	}
+	photos, err := photo.NewS3(ctx, cfg.AWSRegion, cfg.S3Bucket)
+	if err != nil {
+		return err
+	}
+	gem := gemini.New(cfg.GeminiAPIKey)
+	rec := &recognition.Service{
+		Store: st, Gemini: gem, Model: cfg.GeminiRecognitionModel, Photos: photos,
+		Matcher: &nutrition.Matcher{
+			DB: nut, Cache: st, Log: log,
+			Picker: &recognition.GeminiPicker{Gemini: gem, Model: cfg.GeminiTextModel, Usage: st},
+		},
+		Alerter:    &alert.Feishu{URL: cfg.FeishuAlertWebhook, Log: log},
+		QuotaLimit: cfg.RecognitionDailyQuota, GlobalLimit: cfg.RecognitionGlobalDailyLimit,
+		Log: log, Now: time.Now,
+	}
+	go (&jobs.Runner{Store: st, Photos: photos, Log: log, Now: time.Now}).Run(ctx)
+
 	srv := &http.Server{
 		Addr: cfg.ListenAddr,
 		Handler: httpapi.New(httpapi.Deps{
-			Store: st, Auth: svc, Nutrition: nut, Log: log, Version: version, RecognitionQuota: cfg.RecognitionDailyQuota,
+			Store: st, Auth: svc, Nutrition: nut, Recognition: rec, Photos: photos, Log: log, Version: version, RecognitionQuota: cfg.RecognitionDailyQuota,
 		}),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       60 * time.Second,

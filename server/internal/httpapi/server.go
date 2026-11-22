@@ -13,8 +13,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/wanggang316/health-assistant/server/internal/auth"
+	"github.com/wanggang316/health-assistant/server/internal/localtime"
 	"github.com/wanggang316/health-assistant/server/internal/nutrition"
-	"github.com/wanggang316/health-assistant/server/internal/quota"
+	"github.com/wanggang316/health-assistant/server/internal/photo"
+	"github.com/wanggang316/health-assistant/server/internal/recognition"
 	"github.com/wanggang316/health-assistant/server/internal/store"
 )
 
@@ -23,6 +25,8 @@ type Server struct {
 	store            *store.Store
 	auth             *auth.Service
 	nutrition        *nutrition.DB
+	recognition      *recognition.Service
+	photos           photo.Storage
 	log              *slog.Logger
 	version          string
 	recognitionQuota int
@@ -34,6 +38,8 @@ type Deps struct {
 	Store            *store.Store
 	Auth             *auth.Service
 	Nutrition        *nutrition.DB
+	Recognition      *recognition.Service
+	Photos           photo.Storage
 	Log              *slog.Logger
 	Version          string
 	RecognitionQuota int
@@ -45,7 +51,7 @@ func New(d Deps) http.Handler {
 	if d.Now == nil {
 		d.Now = time.Now
 	}
-	s := &Server{store: d.Store, auth: d.Auth, nutrition: d.Nutrition, log: d.Log, version: d.Version, recognitionQuota: d.RecognitionQuota, now: d.Now}
+	s := &Server{store: d.Store, auth: d.Auth, nutrition: d.Nutrition, recognition: d.Recognition, photos: d.Photos, log: d.Log, version: d.Version, recognitionQuota: d.RecognitionQuota, now: d.Now}
 	mux := http.NewServeMux()
 	handle := func(pattern string, h func(http.ResponseWriter, *http.Request) error) {
 		mux.Handle(pattern, s.wrap(h))
@@ -62,7 +68,10 @@ func New(d Deps) http.Handler {
 	authed("POST /v1/auth/logout", s.authLogout)
 	authed("GET /v1/me", s.getMe)
 	authed("PUT /v1/me/profile", s.putProfile)
+	authed("DELETE /v1/me", s.deleteMe)
 	authed("GET /v1/foods/search", s.searchFoods)
+	authed("POST /v1/recognitions", s.createRecognition)
+	authed("GET /v1/recognitions/{id}", s.getRecognition)
 	handle("/", func(http.ResponseWriter, *http.Request) error { return errNotFound })
 	return s.accessLog(mux)
 }
@@ -175,7 +184,7 @@ func utcOffset(r *http.Request) (int, error) {
 		return 0, nil
 	}
 	n, err := strconv.Atoi(v)
-	if err != nil || !quota.ValidOffset(n) {
+	if err != nil || !localtime.ValidOffset(n) {
 		return 0, errInvalid("X-Utc-Offset-Minutes", "UTC offset must be an integer from -720 to 840.")
 	}
 	return n, nil
