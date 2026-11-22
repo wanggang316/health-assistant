@@ -107,7 +107,7 @@ sequenceDiagram
 
 ```
 server/
-  go.mod                      # module path: TODO (GitHub owner/repo)
+  go.mod                      # module github.com/wanggang316/health-assistant/server
   cmd/
     health-api/               # main: "serve" and "migrate" subcommands
     fdcimport/                # builds nutrition.db from FDC downloads + aliases
@@ -134,7 +134,7 @@ Rules: handlers call domain packages; only `store` contains SQL (ADR 0008); `gem
 
 ### 2.2 Libraries
 
-Go: latest stable (1.27.4 on 2026-11-22). Routing uses `net/http.ServeMux` method and path patterns. Logging uses `log/slog`. JSON uses `encoding/json`. JPEG uses `image/jpeg`.
+Go: `go.mod` sets 1.26.2, the minimum the code needs; CI uses that version. (Latest stable was 1.27.4 on 2026-11-22.) Routing uses `net/http.ServeMux` method and path patterns. Logging uses `log/slog`. JSON uses `encoding/json`. JPEG uses `image/jpeg`.
 
 | Library | Version (2026-11-22) | Why |
 |---|---|---|
@@ -148,7 +148,7 @@ Go: latest stable (1.27.4 on 2026-11-22). Routing uses `net/http.ServeMux` metho
 
 Not used: a web framework (ServeMux is enough), an ORM (ADR 0008 asks for portable SQL behind one repository), the `google.golang.org/genai` SDK (we need one REST call; the Vertex `GenerationConfig` fields are in transition, see §6.2, and a thin client gives full control of the request body), a migration framework (see §2.4).
 
-**SQLite driver: `modernc.org/sqlite` (pure Go).** Reasons: `CGO_ENABLED=0` gives one static linux binary built on the Ubuntu runner with no C toolchain or cross-compiler; the VM needs no shared libraries; `go test -race` and builds stay simple. Cost: it is slower than `mattn/go-sqlite3` (cgo). With one VM and few users this is not visible. Reconsider only if profiling shows the driver as a bottleneck. **TODO**: confirm FTS5 is available in the modernc build with a test in the first PR (§7 uses FTS5).
+**SQLite driver: `modernc.org/sqlite` (pure Go).** Reasons: `CGO_ENABLED=0` gives one static linux binary built on the Ubuntu runner with no C toolchain or cross-compiler; the VM needs no shared libraries; `go test -race` and builds stay simple. Cost: it is slower than `mattn/go-sqlite3` (cgo). With one VM and few users this is not visible. Reconsider only if profiling shows the driver as a bottleneck. FTS5 is available in the modernc build (checked by `TestFTS5Available`).
 
 ### 2.3 SQLite settings
 
@@ -161,7 +161,7 @@ Not used: a web framework (ServeMux is enough), an ORM (ADR 0008 asks for portab
 
 - Forward-only SQL files in `internal/store/migrations/NNNN_name.sql`, embedded with `embed.FS`.
 - A small runner (about 60 lines) applies files in order, each in one transaction, and records them in `schema_migrations(version, applied_at)`. A framework adds little for one database and forward-only files.
-- `health-api migrate` runs from `activate.sh` before the restart, after a pre-migration copy (§10). `serve` refuses to start if the database has unapplied or unknown migrations.
+- `health-api migrate` runs from `activate.sh` before the restart, after a pre-migration copy (§10). `serve` refuses to start if the database has unapplied migrations. Versions from a newer release only cause a warning, so that a rolled-back binary starts.
 - Expand/contract rule: each migration must keep the previous release working, so that a rollback of the binary is safe without a down migration.
 
 ### 2.5 Configuration (env)
@@ -216,7 +216,7 @@ Opaque tokens, not JWTs. One process and one database make a lookup cheap, and o
 | Refresh token | `ha_rt_` + 32 random bytes base64url | 60 days, sliding | `sha256` in `sessions.refresh_token_hash` |
 
 - `Authorization: Bearer <access token>` on every authenticated call.
-- `POST /v1/auth/refresh` rotates both tokens: it creates a new session row in the same `family_id` and marks the old row `rotated_at`. A rotated refresh token used again within 30 s returns the same new pair (lost response on a flaky network). After that, reuse revokes the full family (theft signal) and returns `401 session_revoked`.
+- `POST /v1/auth/refresh` rotates both tokens: it creates a new session row in the same `family_id` and marks the old row `rotated_at`. A rotated refresh token used again within 30 s gets another new pair in the same family (lost response on a flaky network; the server keeps only hashes, so it cannot return the first pair again). After that, reuse revokes the full family (theft signal) and returns `401 session_revoked`.
 - `POST /v1/auth/logout` revokes the family. Account deletion revokes all families.
 - App storage: Keychain, `kSecClassGenericPassword`, service `com.gumpw.health-assistant.session`, `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`, no iCloud sync.
 - The app refreshes when it gets `401 token_expired`, with one refresh in flight at a time (§9.4).
@@ -488,7 +488,7 @@ CREATE TABLE aliases (
 
 ## 5. REST API
 
-Base URL `https://health-api.gumpw.com`. All bodies are JSON (UTF-8) except the photo upload. Field names are `snake_case`. Times are RFC 3339 UTC. Dates are `YYYY-MM-DD`. Every request sends `Accept-Language` (`zh-Hans` or `en`); the backend uses it for health advice text and updates `users.locale`. Every response has `X-Request-Id`. API fixtures for both sides live in `docs/api/fixtures/` (§11).
+Base URL `https://health-api.gumpw.com`. All bodies are JSON (UTF-8) except the photo upload. Field names are `snake_case`. Times are RFC 3339 UTC. Dates are `YYYY-MM-DD`. Every request sends `Accept-Language` (`zh-Hans` or `en`); the backend uses it for health advice text and updates `users.locale`. Every response has `X-Request-Id`. The app sends `X-Utc-Offset-Minutes` (its current UTC offset); `GET /v1/me` uses it for the local day of the recognition quota (default 0). API fixtures for both sides live in `docs/api/fixtures/` (§11).
 
 ### 5.1 Errors
 
@@ -1288,10 +1288,10 @@ The profile expires 2027-11-19 and the certificate 2027-11-18; the lane blocks o
 3. **Structured output field on the express endpoint**: `responseFormat` (new) vs `responseMimeType` + `responseSchema` (deprecated, documented). Spike in the first backend PR.
 4. **Gemini parameters**: `thinkingLevel`, `mediaResolution`, temperature guidance for Gemini 3.x. Decide on the evaluation set.
 5. **GoogleSignIn 10.1.0 nonce API**: exact method signature. **TODO**.
-6. **modernc FTS5**: confirm FTS5 is compiled in. If not, use a `LIKE`-based candidate query plus the model pick.
+6. **modernc FTS5**: **Done**: FTS5 is compiled in (`TestFTS5Available`).
 7. **FDC details**: exact download file names and SHA-256; energy nutrient numbers (1008/2047/2048). **TODO**.
 8. **Port and CPU architecture** of the VM; DNS record for `health-api.gumpw.com`. **TODO**.
-9. **Go module path / GitHub repository** owner. **TODO**.
+9. **Go module path**: **Done**: `github.com/wanggang316/health-assistant/server`.
 10. **Unconfirmed recognitions**: proposal is to delete them and their photos after 7 days. They are not evaluation pairs. **Decided (2026-11-22): delete after 7 days.**
 11. **Data in backups after deletion**: `health.db` backups keep deleted users for up to 30 days. Needs a statement in the privacy policy. The photo bucket has versioning off (checked on 2026-11-22), so a delete removes the object.
 12. **Daily target history**: v1 compares past days with the current target. A profile change marks old summaries stale and rewrites them with the new target. Accept, or store target snapshots per day? **Decided (2026-11-22): compare with the current target; no snapshots in v1.**
