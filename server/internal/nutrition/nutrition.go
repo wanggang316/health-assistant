@@ -324,3 +324,15 @@ func (f Food) IsProduce() bool {
 	c := strings.ToLower(f.Category)
 	return strings.Contains(c, "vegetable") || strings.Contains(c, "fruit")
 }
+
+// Ref is the food reference in API responses.
+type Ref struct {
+	FDCID       int64     `json:"fdc_id"`
+	Description string    `json:"description"`
+	Per100g     Nutrients `json:"per_100g"`
+}
+
+// Ref returns the API reference of the food.
+func (f Food) Ref() Ref {
+	return Ref{FDCID: f.FDCID, Description: f.Description, Per100g: f.Per100g.Rounded()}
+}

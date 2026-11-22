@@ -3,6 +3,7 @@ package nutrition
 import (
 	"context"
 	"log/slog"
+	"strings"
 )
 
 // Match methods, as stored in ingredients.match_method.
@@ -143,9 +144,17 @@ func (m *Matcher) Resolve(ctx context.Context, qs []Query) ([]Match, error) {
 	return out, nil
 }
 
+// alias tries the English name first: the model writes the cooked state
+// there ("egg, scrambled"), while the Chinese name is often only the food
+// ("鸡蛋"). Chinese names with "/" are tried per part.
 func (m *Matcher) alias(ctx context.Context, q Query) (Food, bool, error) {
-	if f, ok, err := m.DB.Alias(ctx, q.NameZh, "zh"); err != nil || ok {
+	if f, ok, err := m.DB.Alias(ctx, q.NameEn, "en"); err != nil || ok {
 		return f, ok, err
 	}
-	return m.DB.Alias(ctx, q.NameEn, "en")
+	for _, part := range strings.Split(q.NameZh, "/") {
+		if f, ok, err := m.DB.Alias(ctx, part, "zh"); err != nil || ok {
+			return f, ok, err
+		}
+	}
+	return Food{}, false, nil
 }
