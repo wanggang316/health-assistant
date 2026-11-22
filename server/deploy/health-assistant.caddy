@@ -1,0 +1,17 @@
+# health-assistant production Caddy snippet.
+# Synced from each release by deploy/activate.sh into
+# /etc/caddy/conf.d/health-assistant.caddy.
+
+health-api.gumpw.com {
+	encode zstd gzip
+	request_body {
+		max_size 3MB
+	}
+	reverse_proxy localhost:3140
+	log {
+		output file /var/log/caddy/health-api.gumpw.com.log {
+			roll_size 50mb
+			roll_keep 5
+		}
+	}
+}

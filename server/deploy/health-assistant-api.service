@@ -1,0 +1,20 @@
+[Unit]
+Description=health-assistant api
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/health-assistant/current
+EnvironmentFile=/opt/health-assistant/shared/.env
+ExecStart=/opt/health-assistant/current/health-api serve
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=70
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/health-assistant/shared
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

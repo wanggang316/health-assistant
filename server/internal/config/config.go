@@ -36,6 +36,7 @@ type Config struct {
 	RecognitionDailyQuota       int
 	RecognitionGlobalDailyLimit int
 	FeishuAlertWebhook          string
+	FeishuAlertSecret           string
 }
 
 // Load reads the configuration from the environment. It returns an error that
@@ -102,6 +103,7 @@ func load(getenv func(string) string) (Config, error) {
 		RecognitionDailyQuota:       integer("RECOGNITION_DAILY_QUOTA", 30),
 		RecognitionGlobalDailyLimit: integer("RECOGNITION_GLOBAL_DAILY_LIMIT", 500),
 		FeishuAlertWebhook:          str("FEISHU_ALERT_WEBHOOK", ""),
+		FeishuAlertSecret:           str("FEISHU_ALERT_SECRET", ""),
 	}
 	if c.TokenEncryptionKey != nil && len(c.TokenEncryptionKey) != 32 {
 		errs = append(errs, errors.New("TOKEN_ENCRYPTION_KEY must decode to 32 bytes"))
