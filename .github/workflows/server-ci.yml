@@ -22,9 +22,17 @@ jobs:
         with:
           go-version-file: server/go.mod
           cache-dependency-path: server/go.sum
+      - name: Restore FDC downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/fdc
+          key: fdc-${{ hashFiles('server/internal/nutrition/datasets.lock') }}
       - name: gofmt
         run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
       - run: go vet ./...
-      - run: go test -race ./...
+      - name: Build nutrition.db
+        run: go run ./cmd/fdcimport -cache ~/.cache/fdc -out nutrition.db
+      - name: Test
+        run: NUTRITION_DB=$PWD/nutrition.db go test -race ./...
       - name: staticcheck
         run: go run honnef.co/go/tools/cmd/staticcheck@latest ./...

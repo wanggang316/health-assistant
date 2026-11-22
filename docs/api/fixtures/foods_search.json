@@ -1,0 +1,10 @@
+{
+  "foods": [
+    {
+      "fdc_id": 168880,
+      "description": "Rice, white, medium-grain, enriched, cooked",
+      "data_type": "sr_legacy",
+      "per_100g": { "kcal": 130, "protein_g": 2.4, "fat_g": 0.2, "carb_g": 28.6, "fiber_g": 0.3, "sodium_mg": 0 }
+    }
+  ]
+}
