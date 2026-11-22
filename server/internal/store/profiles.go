@@ -69,3 +69,22 @@ func (s *Store) RecognitionQuotaUsed(ctx context.Context, userID, quotaDate stri
 	}
 	return used, err
 }
+
+// CachedMatch returns a learned ingredient match (§7.2 step 2).
+func (s *Store) CachedMatch(ctx context.Context, nameKey, version string) (int64, bool, error) {
+	var id int64
+	err := s.r.QueryRowContext(ctx, "SELECT fdc_id FROM ingredient_matches WHERE name_key = ? AND nutrition_version = ?", nameKey, version).Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, false, nil
+	}
+	return id, err == nil, err
+}
+
+// SaveMatch stores a model pick for later recognitions.
+func (s *Store) SaveMatch(ctx context.Context, nameKey string, fdcID int64, version string) error {
+	_, err := s.w.ExecContext(ctx,
+		`INSERT INTO ingredient_matches (name_key, fdc_id, method, nutrition_version, created_at) VALUES (?, ?, 'model', ?, ?)
+		 ON CONFLICT (name_key) DO UPDATE SET fdc_id = excluded.fdc_id, nutrition_version = excluded.nutrition_version, created_at = excluded.created_at`,
+		nameKey, fdcID, version, formatTime(time.Now()))
+	return err
+}
