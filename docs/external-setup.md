@@ -12,10 +12,11 @@ This file lists the external accounts and resources that the project uses. It co
 | App Store profile | `health-assistant AppStore` (`TPA3M32W6Z`), expires 2027-11-19 |
 | Distribution certificate | `SRH6U6PUU9`, expires 2027-11-18 (shared with trlm) |
 | TestFlight internal group | `Internal`, access to all builds |
+| Sign in with Apple key | `Health Assistant SIWA`, Key ID `X9UM3BZKR3`, primary App ID `com.gumpw.health-assistant`. The backend uses it for token revocation. |
 
 The app name "Health Assistant" is used by another developer. "Gump Health Assistant" is a working name; change it before App Store release.
 
-Local material: `~/.config/appstoreconnect/` (shared API key) and `~/.config/appstoreconnect/ios/projects/health-assistant/` (profile). The shared API key cannot register bundle IDs, create profiles, or create apps; do these in the web portal.
+Local material: `~/.config/appstoreconnect/` (shared API key) and `~/.config/appstoreconnect/ios/projects/health-assistant/` (profile and the Sign in with Apple `.p8` key; Apple does not let you download the key again). The shared API key cannot register bundle IDs, create profiles, or create apps; do these in the web portal.
 
 ## Google Cloud
 

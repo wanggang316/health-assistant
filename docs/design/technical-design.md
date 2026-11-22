@@ -1283,7 +1283,7 @@ The profile expires 2027-11-19 and the certificate 2027-11-18; the lane blocks o
 
 ## 13. Open questions and risks
 
-1. **Sign in with Apple key not created.** Needs a `.p8` key with Sign in with Apple for `com.gumpw.health-assistant`, its Key ID, and a project-env PR. Without it, token revocation on account deletion (App Store requirement) cannot work. **Decided (2026-11-22): create the key.**
+1. **Sign in with Apple key not created.** Needs a `.p8` key with Sign in with Apple for `com.gumpw.health-assistant`, its Key ID, and a project-env PR. Without it, token revocation on account deletion (App Store requirement) cannot work. **Done (2026-11-22)**: Key ID `X9UM3BZKR3`; see `docs/external-setup.md`. The project-env PR is still to do.
 2. **Apple server-to-server notification endpoint**: where to set it for an App ID without a Services ID. **TODO**.
 3. **Structured output field on the express endpoint**: `responseFormat` (new) vs `responseMimeType` + `responseSchema` (deprecated, documented). Spike in the first backend PR.
 4. **Gemini parameters**: `thinkingLevel`, `mediaResolution`, temperature guidance for Gemini 3.x. Decide on the evaluation set.
