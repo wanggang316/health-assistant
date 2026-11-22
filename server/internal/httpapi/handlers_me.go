@@ -98,10 +98,7 @@ func (s *Server) meResponse(r *http.Request, userID string) (meResponse, error) 
 		ActivityLevel: p.ActivityLevel, Goal: p.Goal,
 		MacroSplit: &macroSplitJSON{p.ProteinPct, p.FatPct, p.CarbPct},
 	}
-	if d, ok := target.Calculate(target.Profile{
-		Sex: p.Sex, Age: now.Year() - p.BirthYear, HeightCm: p.HeightCm, WeightKg: p.WeightKg,
-		ActivityLevel: p.ActivityLevel, Goal: p.Goal, ProteinPct: p.ProteinPct, FatPct: p.FatPct, CarbPct: p.CarbPct,
-	}); ok {
+	if d, ok := target.FromProfile(p, now); ok {
 		resp.DailyTarget = &d
 	}
 	return resp, nil
