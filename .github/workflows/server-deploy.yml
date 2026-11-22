@@ -50,7 +50,7 @@ jobs:
           cp deploy/health-assistant-api.service deploy/health-assistant.caddy deploy/activate.sh deploy/healthcheck "$B/deploy/"
           echo "${{ github.sha }}" > "$B/SHA"
           date -u +%Y-%m-%dT%H:%M:%SZ > "$B/BUILT_AT"
-          tar -czf /tmp/health-assistant-release.tgz -C "$B" .
+          tar -czf "$GITHUB_WORKSPACE/health-assistant-release.tgz" -C "$B" .
           echo "release_name=$(date -u +%Y%m%d-%H%M%S)-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
       - name: Copy release to VM
         uses: appleboy/scp-action@v0.1.7
@@ -58,9 +58,8 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          source: /tmp/health-assistant-release.tgz
+          source: health-assistant-release.tgz
           target: /tmp/
-          strip_components: 1
       - name: Activate release
         uses: appleboy/ssh-action@v1.0.3
         with:
