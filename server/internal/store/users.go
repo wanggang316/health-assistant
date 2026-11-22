@@ -140,3 +140,43 @@ func (s *Store) AppleRefreshToken(ctx context.Context, userID string) ([]byte, e
 	}
 	return enc, err
 }
+
+// DeleteUser deletes the user and all their rows (foreign keys cascade). It
+// queues the S3 keys of the user's meal photos for deletion and returns them.
+func (s *Store) DeleteUser(ctx context.Context, userID string, now time.Time) ([]string, error) {
+	var keys []string
+	err := s.inTx(ctx, func(tx *sql.Tx) error {
+		rows, err := tx.QueryContext(ctx, "SELECT s3_key FROM meal_photos WHERE user_id = ?", userID)
+		if err != nil {
+			return err
+		}
+		for rows.Next() {
+			var k string
+			if err := rows.Scan(&k); err != nil {
+				rows.Close()
+				return err
+			}
+			keys = append(keys, k)
+		}
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			return err
+		}
+		if err := queuePhotoDeletion(ctx, tx, now, keys...); err != nil {
+			return err
+		}
+		// meal_entries.recognition_id has no cascade; delete entries first.
+		if _, err := tx.ExecContext(ctx, "DELETE FROM meal_entries WHERE user_id = ?", userID); err != nil {
+			return err
+		}
+		res, err := tx.ExecContext(ctx, "DELETE FROM users WHERE id = ?", userID)
+		if err != nil {
+			return err
+		}
+		if n, _ := res.RowsAffected(); n != 1 {
+			return ErrNotFound
+		}
+		return nil
+	})
+	return keys, err
+}

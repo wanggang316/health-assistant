@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/wanggang316/health-assistant/server/internal/auth"
 	"github.com/wanggang316/health-assistant/server/internal/quota"
 	"github.com/wanggang316/health-assistant/server/internal/store"
 	"github.com/wanggang316/health-assistant/server/internal/target"
@@ -139,4 +140,44 @@ func (s *Server) putProfile(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	return s.getMe(w, r)
+}
+
+func (s *Server) deleteMe(w http.ResponseWriter, r *http.Request) error {
+	var body struct {
+		AppleAuthorizationCode string `json:"apple_authorization_code"`
+	}
+	if r.ContentLength != 0 {
+		if err := decodeJSON(w, r, &body); err != nil {
+			return err
+		}
+	}
+	ctx := r.Context()
+	userID := principal(ctx).UserID
+	u, err := s.store.GetUser(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if u.Provider == "apple" {
+		err := s.auth.RevokeApple(ctx, userID, body.AppleAuthorizationCode)
+		if errors.Is(err, auth.ErrAppleReauthRequired) {
+			return &apiError{Status: http.StatusConflict, Code: "apple_reauth_required", Message: "Sign in with Apple again to delete the account."}
+		}
+		if err != nil {
+			return err
+		}
+	}
+	keys, err := s.store.DeleteUser(ctx, userID, s.now())
+	if err != nil {
+		return err
+	}
+	// Best effort now; the cleanup job retries the queue.
+	for _, k := range keys {
+		derr := s.photos.Delete(ctx, k)
+		if ferr := s.store.FinishPhotoDeletion(ctx, k, derr); ferr != nil {
+			s.log.ErrorContext(ctx, "photo deletion queue", "err", ferr)
+		}
+	}
+	s.log.InfoContext(ctx, "account deleted", "user_id", userID, "photos", len(keys))
+	w.WriteHeader(http.StatusNoContent)
+	return nil
 }

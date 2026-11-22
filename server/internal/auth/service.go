@@ -250,3 +250,43 @@ func (s *Service) decrypt(enc []byte) ([]byte, error) {
 	}
 	return g.Open(nil, enc[:g.NonceSize()], enc[g.NonceSize():], nil)
 }
+
+// ErrAppleReauthRequired means account deletion needs a fresh Apple
+// authorization code (§3.6).
+var ErrAppleReauthRequired = errors.New("apple reauthorization required")
+
+// RevokeApple revokes the Apple tokens of a user before account deletion.
+// It uses a fresh authorization code if given, else the stored refresh token.
+func (s *Service) RevokeApple(ctx context.Context, userID, code string) error {
+	var rt string
+	if code != "" {
+		t, err := s.AppleAPI.ExchangeCode(ctx, code)
+		if err != nil {
+			s.Log.Warn("apple code exchange for deletion failed", "user_id", userID, "err", err)
+		} else {
+			rt = t
+		}
+	}
+	if rt == "" {
+		enc, err := s.Store.AppleRefreshToken(ctx, userID)
+		if errors.Is(err, store.ErrNotFound) {
+			return ErrAppleReauthRequired
+		}
+		if err != nil {
+			return err
+		}
+		plain, err := s.decrypt(enc)
+		if err != nil {
+			return err
+		}
+		rt = string(plain)
+	}
+	if err := s.AppleAPI.Revoke(ctx, rt); err != nil {
+		// A stored token can be stale; ask for a new code once.
+		if code == "" {
+			return ErrAppleReauthRequired
+		}
+		return err
+	}
+	return nil
+}

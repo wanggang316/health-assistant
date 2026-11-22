@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -13,28 +14,49 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/wanggang316/health-assistant/server/internal/auth"
 	"github.com/wanggang316/health-assistant/server/internal/auth/authtest"
+	"github.com/wanggang316/health-assistant/server/internal/nutrition"
 	"github.com/wanggang316/health-assistant/server/internal/nutrition/nutritiontest"
+	"github.com/wanggang316/health-assistant/server/internal/recognition"
 	"github.com/wanggang316/health-assistant/server/internal/store"
 )
 
 const bundleID = "com.gumpw.health-assistant"
 
-type nopApple struct{}
+type recordingApple struct {
+	mu         sync.Mutex
+	revoked    []string
+	failRevoke bool
+}
 
-func (nopApple) ExchangeCode(context.Context, string) (string, error) { return "rt", nil }
-func (nopApple) Revoke(context.Context, string) error                 { return nil }
+func (*recordingApple) ExchangeCode(_ context.Context, code string) (string, error) {
+	return "rt-" + code, nil
+}
+func (a *recordingApple) Revoke(_ context.Context, rt string) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.failRevoke {
+		return errors.New("invalid_grant")
+	}
+	a.revoked = append(a.revoked, rt)
+	return nil
+}
 
 type testAPI struct {
-	t    *testing.T
-	srv  *httptest.Server
-	jwks *authtest.JWKS
-	now  time.Time
+	t      *testing.T
+	srv    *httptest.Server
+	jwks   *authtest.JWKS
+	now    time.Time
+	gem    *fakeGemini
+	photos *memPhotos
+	apple  *recordingApple
+	store  *store.Store
 }
 
 func newTestAPI(t *testing.T) *testAPI {
@@ -48,14 +70,22 @@ func newTestAPI(t *testing.T) *testAPI {
 	if _, err := st.Migrate(ctx); err != nil {
 		t.Fatal(err)
 	}
-	a := &testAPI{t: t, jwks: authtest.NewJWKS(t), now: time.Date(2026, 11, 22, 4, 12, 0, 0, time.UTC)}
+	a := &testAPI{t: t, jwks: authtest.NewJWKS(t), now: time.Now().UTC().Truncate(time.Second), gem: &fakeGemini{},
+		photos: &memPhotos{objects: map[string][]byte{}}, apple: &recordingApple{}, store: st}
 	clock := func() time.Time { return a.now }
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	svc := &auth.Service{
 		Store: st, Apple: auth.NewAppleVerifier(ctx, a.jwks.URL, bundleID), Google: auth.NewGoogleVerifier(ctx, a.jwks.URL, "gid"),
-		AppleAPI: nopApple{}, EncKey: make([]byte, 32), Log: log, Now: time.Now,
+		AppleAPI: a.apple, EncKey: make([]byte, 32), Log: log, Now: time.Now,
 	}
-	a.srv = httptest.NewServer(New(Deps{Store: st, Auth: svc, Nutrition: nutritiontest.Open(t), Log: log, Version: "abc123", RecognitionQuota: 30, Now: clock}))
+	nut := nutritiontest.Open(t)
+	rec := &recognition.Service{
+		Store: st, Gemini: a.gem, Model: "gemini-test", Photos: a.photos,
+		Matcher:    &nutrition.Matcher{DB: nut, Cache: st, Log: log},
+		QuotaLimit: 30, GlobalLimit: 500, Log: log, Now: clock,
+	}
+	a.srv = httptest.NewServer(New(Deps{Store: st, Auth: svc, Nutrition: nut, Recognition: rec, Photos: a.photos,
+		Log: log, Version: "abc123", RecognitionQuota: 30, Now: clock}))
 	t.Cleanup(a.srv.Close)
 	return a
 }
@@ -229,6 +259,7 @@ func TestSignInProfileRefreshLogout(t *testing.T) {
 	assertShape(t, a.do("POST", "/v1/auth/nonce", "", nil).body, "auth_nonce.json")
 	access, refresh := a.signInApple()
 
+	a.now = time.Date(2026, 11, 22, 4, 12, 0, 0, time.UTC)
 	r := a.do("GET", "/v1/me", access, nil, "X-Utc-Offset-Minutes", "480")
 	if r.status != 200 {
 		t.Fatalf("me: %d %s", r.status, r.body)
