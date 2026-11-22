@@ -1,0 +1,462 @@
+alias,lang,fdc_id
+米饭,zh,168880
+白米饭,zh,168880
+大米饭,zh,168880
+white rice cooked,en,168880
+cooked white rice,en,168880
+rice cooked,en,168880
+steamed rice,en,168880
+糙米饭,zh,168875
+brown rice cooked,en,168875
+糯米饭,zh,169711
+glutinous rice cooked,en,169711
+sticky rice,en,169711
+白粥,zh,168882
+大米粥,zh,168882
+稀饭,zh,168882
+rice porridge,en,168882
+congee,en,168882
+面条,zh,168919
+煮面条,zh,168919
+挂面,zh,168919
+noodles cooked,en,168919
+wheat noodles cooked,en,168919
+noodles boiled,en,168919
+米粉,zh,168914
+米线,zh,168914
+河粉,zh,168914
+rice noodles cooked,en,168914
+馒头,zh,174924
+steamed bun,en,174924
+mantou,en,174924
+白面包,zh,174924
+吐司,zh,174924
+white bread,en,174924
+toast bread,en,174924
+全麦面包,zh,172688
+whole wheat bread,en,172688
+燕麦片,zh,2346396
+燕麦,zh,2346396
+oats,en,2346396
+rolled oats,en,2346396
+玉米,zh,169999
+corn,en,169999
+sweet corn,en,169999
+corn cooked,en,169999
+红薯,zh,168483
+地瓜,zh,168483
+sweet potato,en,168483
+sweet potato cooked,en,168483
+土豆,zh,170438
+马铃薯,zh,170438
+potato,en,170438
+potato cooked,en,170438
+potatoes boiled,en,170438
+山药,zh,170072
+chinese yam,en,170072
+yam,en,170072
+芋头,zh,168486
+taro,en,168486
+taro cooked,en,168486
+鸡蛋,zh,173424
+煮鸡蛋,zh,173424
+水煮蛋,zh,173424
+egg,en,173424
+boiled egg,en,173424
+hard boiled egg,en,173424
+egg boiled,en,173424
+炒鸡蛋,zh,172187
+炒蛋,zh,172187
+scrambled egg,en,172187
+egg scrambled,en,172187
+煎蛋,zh,173423
+荷包蛋,zh,173423
+fried egg,en,173423
+egg fried,en,173423
+生鸡蛋,zh,171287
+raw egg,en,171287
+egg raw,en,171287
+鸭蛋,zh,172189
+duck egg,en,172189
+咸鸭蛋,zh,172189
+salted duck egg,en,172189
+鹌鹑蛋,zh,172191
+quail egg,en,172191
+番茄,zh,170457
+西红柿,zh,170457
+tomato,en,170457
+tomato raw,en,170457
+tomatoes,en,170457
+黄瓜,zh,2346406
+cucumber,en,2346406
+cucumber raw,en,2346406
+小白菜,zh,170391
+青菜,zh,170391
+上海青,zh,170391
+油菜,zh,170391
+bok choy,en,170391
+pak choi,en,170391
+bok choy cooked,en,170391
+大白菜,zh,169980
+白菜,zh,169980
+napa cabbage,en,169980
+chinese cabbage,en,169980
+卷心菜,zh,169976
+包菜,zh,169976
+圆白菜,zh,169976
+cabbage,en,169976
+green cabbage,en,169976
+菠菜,zh,168463
+spinach,en,168463
+spinach cooked,en,168463
+生菜,zh,169249
+lettuce,en,169249
+西兰花,zh,169967
+西蓝花,zh,169967
+花椰菜,zh,169967
+broccoli,en,169967
+broccoli cooked,en,169967
+菜花,zh,170397
+花菜,zh,170397
+cauliflower,en,170397
+胡萝卜,zh,170394
+carrot,en,170394
+carrots,en,170394
+carrot cooked,en,170394
+白萝卜,zh,168452
+萝卜,zh,168452
+daikon,en,168452
+white radish,en,168452
+radish,en,168452
+洋葱,zh,170001
+onion,en,170001
+onions,en,170001
+青椒,zh,170428
+甜椒,zh,170428
+彩椒,zh,170428
+green pepper,en,170428
+bell pepper,en,170428
+sweet pepper,en,170428
+辣椒,zh,170106
+chili pepper,en,170106
+hot pepper,en,170106
+茄子,zh,169229
+eggplant,en,169229
+eggplant cooked,en,169229
+西葫芦,zh,169292
+zucchini,en,169292
+南瓜,zh,168449
+pumpkin,en,168449
+冬瓜,zh,170475
+winter melon,en,170475
+wax gourd,en,170475
+苦瓜,zh,168394
+bitter melon,en,168394
+bitter gourd,en,168394
+丝瓜,zh,168415
+luffa,en,168415
+loofah,en,168415
+芹菜,zh,169989
+celery,en,169989
+韭菜,zh,169994
+chinese chives,en,169994
+garlic chives,en,169994
+蒜苗,zh,168426
+青蒜,zh,168426
+garlic sprouts,en,168426
+大葱,zh,170005
+葱,zh,170005
+小葱,zh,170005
+葱花,zh,170005
+scallion,en,170005
+green onion,en,170005
+spring onion,en,170005
+大蒜,zh,1104647
+蒜,zh,1104647
+蒜末,zh,1104647
+garlic,en,1104647
+生姜,zh,169231
+姜,zh,169231
+ginger,en,169231
+豆芽,zh,169137
+绿豆芽,zh,169137
+bean sprouts,en,169137
+mung bean sprouts,en,169137
+黄豆芽,zh,168460
+soybean sprouts,en,168460
+四季豆,zh,169141
+豆角,zh,169141
+扁豆,zh,169141
+green beans,en,169141
+string beans,en,169141
+荷兰豆,zh,170011
+豌豆,zh,170011
+snow peas,en,170011
+peas,en,170011
+毛豆,zh,168411
+edamame,en,168411
+莲藕,zh,168430
+藕,zh,168430
+lotus root,en,168430
+香菇,zh,168437
+shiitake mushroom,en,168437
+shiitake,en,168437
+蘑菇,zh,169252
+口蘑,zh,169252
+mushroom,en,169252
+mushrooms,en,169252
+white mushroom,en,169252
+金针菇,zh,169382
+enoki mushroom,en,169382
+enoki,en,169382
+木耳,zh,168581
+黑木耳,zh,168581
+wood ear,en,168581
+black fungus,en,168581
+海带,zh,168457
+kelp,en,168457
+紫菜,zh,168458
+nori,en,168458
+laver,en,168458
+seaweed nori,en,168458
+豆腐,zh,172475
+tofu,en,172475
+嫩豆腐,zh,172449
+内酯豆腐,zh,172449
+soft tofu,en,172449
+silken tofu,en,172449
+油豆腐,zh,172451
+炸豆腐,zh,172451
+fried tofu,en,172451
+豆浆,zh,172446
+soy milk,en,172446
+猪肉,zh,168231
+瘦猪肉,zh,168231
+猪瘦肉,zh,168231
+pork,en,168231
+lean pork,en,168231
+pork lean cooked,en,168231
+五花肉,zh,167812
+红烧肉,zh,167812
+pork belly,en,167812
+pork belly braised,en,167812
+猪排,zh,167854
+排骨,zh,167854
+猪排骨,zh,167854
+pork ribs,en,167854
+spare ribs,en,167854
+猪肉末,zh,167903
+肉末,zh,167903
+猪绞肉,zh,167903
+ground pork,en,167903
+minced pork,en,167903
+培根,zh,168322
+bacon,en,168322
+火腿,zh,173864
+ham,en,173864
+香肠,zh,746781
+腊肠,zh,746781
+sausage,en,746781
+chinese sausage,en,746781
+牛肉,zh,170234
+瘦牛肉,zh,170234
+beef,en,170234
+lean beef,en,170234
+beef cooked,en,170234
+牛腩,zh,169488
+beef brisket,en,169488
+beef stew meat,en,169488
+牛肉末,zh,174034
+ground beef,en,174034
+羊肉,zh,172487
+lamb,en,172487
+mutton,en,172487
+鸡肉,zh,171054
+chicken,en,171054
+chicken meat,en,171054
+chicken cooked,en,171054
+鸡胸肉,zh,171477
+chicken breast,en,171477
+chicken breast cooked,en,171477
+鸡腿,zh,172388
+鸡腿肉,zh,172388
+chicken thigh,en,172388
+chicken leg,en,172388
+鸡翅,zh,173630
+chicken wings,en,173630
+chicken wing,en,173630
+鸭肉,zh,172411
+duck,en,172411
+duck meat,en,172411
+鱼,zh,171956
+鱼肉,zh,171956
+fish,en,171956
+fish cooked,en,171956
+鲈鱼,zh,173694
+sea bass,en,173694
+bass,en,173694
+草鱼,zh,174185
+鲤鱼,zh,174185
+carp,en,174185
+grass carp,en,174185
+鲫鱼,zh,174185
+crucian carp,en,174185
+三文鱼,zh,175168
+鲑鱼,zh,175168
+salmon,en,175168
+带鱼,zh,171957
+hairtail,en,171957
+cutlassfish,en,171957
+虾,zh,175180
+虾仁,zh,175180
+大虾,zh,175180
+shrimp,en,175180
+prawn,en,175180
+shrimp cooked,en,175180
+螃蟹,zh,174205
+crab,en,174205
+鱿鱼,zh,174223
+squid,en,174223
+蛤蜊,zh,171975
+花蛤,zh,171975
+clams,en,171975
+牛奶,zh,746782
+纯牛奶,zh,746782
+milk,en,746782
+whole milk,en,746782
+脱脂牛奶,zh,746776
+skim milk,en,746776
+酸奶,zh,2259793
+yogurt,en,2259793
+奶酪,zh,328637
+cheese,en,328637
+cheddar cheese,en,328637
+黄油,zh,173410
+butter,en,173410
+植物油,zh,172370
+食用油,zh,172370
+花生油,zh,172370
+菜籽油,zh,172370
+大豆油,zh,172370
+炒菜油,zh,172370
+vegetable oil,en,172370
+cooking oil,en,172370
+oil,en,172370
+橄榄油,zh,171413
+olive oil,en,171413
+芝麻油,zh,171016
+香油,zh,171016
+sesame oil,en,171016
+猪油,zh,171401
+lard,en,171401
+酱油,zh,174278
+生抽,zh,174278
+老抽,zh,174278
+soy sauce,en,174278
+醋,zh,173469
+米醋,zh,173469
+陈醋,zh,173469
+vinegar,en,173469
+白糖,zh,746784
+糖,zh,746784
+冰糖,zh,746784
+sugar,en,746784
+white sugar,en,746784
+红糖,zh,168833
+brown sugar,en,168833
+蜂蜜,zh,169640
+honey,en,169640
+盐,zh,173468
+食盐,zh,173468
+salt,en,173468
+table salt,en,173468
+蚝油,zh,174529
+oyster sauce,en,174529
+番茄酱,zh,168556
+ketchup,en,168556
+tomato ketchup,en,168556
+沙拉酱,zh,171009
+蛋黄酱,zh,171009
+mayonnaise,en,171009
+芝麻,zh,170150
+白芝麻,zh,170150
+sesame seeds,en,170150
+花生,zh,173806
+peanuts,en,173806
+核桃,zh,170187
+walnuts,en,170187
+杏仁,zh,170567
+almonds,en,170567
+腰果,zh,170571
+cashews,en,170571
+红豆,zh,173728
+red beans,en,173728
+adzuki beans,en,173728
+绿豆,zh,174257
+mung beans,en,174257
+黄豆,zh,174271
+soybeans,en,174271
+苹果,zh,171688
+apple,en,171688
+香蕉,zh,173944
+banana,en,173944
+橙子,zh,169097
+橙,zh,169097
+orange,en,169097
+橘子,zh,169105
+桔子,zh,169105
+tangerine,en,169105
+mandarin orange,en,169105
+梨,zh,169118
+pear,en,169118
+葡萄,zh,174683
+grapes,en,174683
+西瓜,zh,167765
+watermelon,en,167765
+草莓,zh,2346409
+strawberries,en,2346409
+strawberry,en,2346409
+蓝莓,zh,2346411
+blueberries,en,2346411
+猕猴桃,zh,327046
+kiwi,en,327046
+kiwifruit,en,327046
+芒果,zh,169910
+mango,en,169910
+桃子,zh,325430
+桃,zh,325430
+peach,en,325430
+菠萝,zh,169124
+pineapple,en,169124
+哈密瓜,zh,746770
+cantaloupe,en,746770
+honeydew,en,746770
+柚子,zh,167754
+pomelo,en,167754
+荔枝,zh,169086
+lychee,en,169086
+litchi,en,169086
+红枣,zh,168152
+枣,zh,168152
+jujube,en,168152
+red dates,en,168152
+牛油果,zh,171705
+avocado,en,171705
+可乐,zh,174852
+cola,en,174852
+橙汁,zh,169098
+orange juice,en,169098
+啤酒,zh,168746
+beer,en,168746
+绿茶,zh,171917
+茶,zh,171917
+green tea,en,171917
+tea,en,171917
+咖啡,zh,171890
+coffee,en,171890
+black coffee,en,171890
+春卷,zh,172103
+spring roll,en,172103
+egg roll,en,172103
+炒饭,zh,2708954
+fried rice,en,2708954
