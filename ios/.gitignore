@@ -1,0 +1,4 @@
+HealthAssistant.xcodeproj/
+build/
+fastlane/report.xml
+fastlane/README.md
