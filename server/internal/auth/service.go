@@ -290,3 +290,18 @@ func (s *Service) RevokeApple(ctx context.Context, userID, code string) error {
 	}
 	return nil
 }
+
+// SignInDev signs in a test user without an identity provider. Only the
+// local end-to-end setup enables it (config DevAuth).
+func (s *Service) SignInDev(ctx context.Context, subject, locale string) (SignInResult, error) {
+	now := s.Now()
+	u, created, err := s.Store.UpsertUser(ctx, store.SignInIdentity{Provider: "google", Subject: "dev:" + subject, DisplayName: "Dev " + subject}, locale, now)
+	if err != nil {
+		return SignInResult{}, err
+	}
+	t, ns := s.newTokens(now)
+	if err := s.Store.CreateSession(ctx, u.ID, ns, now); err != nil {
+		return SignInResult{}, err
+	}
+	return SignInResult{Tokens: t, User: u, Created: created}, nil
+}

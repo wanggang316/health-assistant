@@ -91,7 +91,7 @@ func newTestAPI(t *testing.T) *testAPI {
 	mealSvc := &meals.Service{Store: st, Nutrition: nut, Now: clock}
 	adv := &advice.Service{Store: st, Nutrition: nut, Gemini: a.adviceGem, Model: "lite", Log: log, Now: clock}
 	a.srv = httptest.NewServer(New(Deps{Store: st, Auth: svc, Nutrition: nut, Recognition: rec, Photos: a.photos,
-		Meals: mealSvc, Advice: adv, Log: log, Version: "abc123", RecognitionQuota: 30, Now: clock}))
+		Meals: mealSvc, Advice: adv, Log: log, Version: "abc123", RecognitionQuota: 30, Now: clock, DevAuth: true}))
 	t.Cleanup(a.srv.Close)
 	return a
 }
@@ -376,5 +376,17 @@ func TestFoodSearch(t *testing.T) {
 	}
 	if code := errorCode(t, a.do("GET", "/v1/foods/search?q=", access, nil)); code != "invalid_request" {
 		t.Fatalf("empty q: %s", code)
+	}
+}
+
+func TestDevSignInAndPrivacy(t *testing.T) {
+	a := newTestAPI(t)
+	r := a.do("POST", "/v1/auth/dev", "", map[string]string{"subject": "e2e"})
+	if r.status != http.StatusCreated {
+		t.Fatalf("dev sign-in: %d %s", r.status, r.body)
+	}
+	assertShape(t, r.body, "auth_sign_in.json")
+	if r := a.do("GET", "/privacy", "", nil); r.status != 200 || !strings.Contains(string(r.body), "Privacy policy") {
+		t.Fatalf("privacy: %d", r.status)
 	}
 }
