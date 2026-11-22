@@ -1,0 +1,19 @@
+{
+  "user": {
+    "id": "0193a1b2-7c3d-7e4f-8a9b-0c1d2e3f4a5b",
+    "provider": "google",
+    "display_name": "Gump",
+    "email": "g@example.com"
+  },
+  "profile": {
+    "sex": "male",
+    "birth_year": 1995,
+    "height_cm": 170,
+    "weight_kg": 61,
+    "activity_level": "light",
+    "goal": "lose",
+    "macro_split": { "protein_pct": 25, "fat_pct": 30, "carb_pct": 45 }
+  },
+  "daily_target": { "kcal": 1779, "protein_g": 111, "fat_g": 59, "carb_g": 200 },
+  "recognition_quota": { "limit": 30, "used": 4, "resets_at": "2026-11-22T16:00:00Z" }
+}
