@@ -893,8 +893,8 @@ Decision: **no USDA API calls at runtime.** `cmd/fdcimport` reads the pinned JSO
 | Survey (FNDDS) | yes, lower rank | Mixed and prepared foods (noodles, dumplings, soups) as a fallback. |
 | Branded | no | Large, packaged products, barcode use is out of v1 scope. |
 
-- Nutrients kept per 100 g: energy (kcal), protein, total fat, carbohydrate (by difference), fiber, sodium. Energy source order: nutrient 1008 (kcal), then 2048 (Atwater specific), then 2047 (Atwater general), else 4/9/4 from macros. **TODO**: verify these nutrient numbers against the downloaded files in the first import test.
-- `datasets.lock` pins each file URL and SHA-256. **TODO**: record exact file names. `nutrition_version` = the three release tags, for example `fnd-2026-10+sr-2018-04+fndds-2024-10`.
+- Nutrients kept per 100 g: energy (kcal), protein, total fat, carbohydrate (by difference), fiber, sodium. Energy source order: nutrient 1008 (kcal), then 2048 (Atwater specific), then 2047 (Atwater general), else 4/9/4 from macros. Checked against the downloaded files on 2026-11-22: Foundation has 1008 for only some foods and 2047/2048 for most; SR Legacy and FNDDS have 1008. Foods without protein, fat, or carbohydrate are skipped.
+- `server/internal/nutrition/datasets.lock` pins each file URL and SHA-256 (Foundation 2026-10-29, SR Legacy 2018-04, FNDDS 2024-10-31). `nutrition_version` = the three release tags, for example `fnd-2026-10+sr-2018-04+fndds-2024-10`.
 - CI caches the downloads by the hash of `datasets.lock` and builds `nutrition.db` in each backend build (§11.3). An FDC key is not needed for downloads. `FDC_API_KEY` is only for manual exploration.
 
 ### 7.2 Ingredient name matching
@@ -905,6 +905,7 @@ Input: `name_en` and `name_zh` from the model. Steps, stop at the first hit:
 2. **Cache** — `ingredient_matches` by normalized `name_en` (results of earlier model picks for the same `nutrition_version`).
 3. **Candidates** — FTS5 query on `foods_fts` with the `name_en` words (BM25), top 8, with a rank bonus for Foundation > SR Legacy > FNDDS and for state words that match ("raw", "cooked", "boiled", "fried").
 4. **Model pick** — one `gemini-3.1-flash-lite` call per recognition for all unresolved ingredients. The response schema is built per request: an object with one property per ingredient (`i0`, `i1`, …), each an `enum` of its candidate `fdc_id` strings plus `"none"`. The model can only choose a candidate ID (research report §4.2, step 3). The pick is written to `ingredient_matches`.
+If the model pick call fails, the best FTS candidate is used with `match_method = fts`; the cross-check and the review screen catch a bad match. A pick of `none` leaves the ingredient unresolved.
 5. **Unresolved** — `food: null` with the candidates. The app asks the user to choose or search (§5.2). A meal entry cannot be saved with an unresolved ingredient (`422 unresolved_ingredient`).
 
 Embeddings are not used in v1. Add them only if the evaluation shows that FTS candidate recall is the main error.
@@ -1289,7 +1290,7 @@ The profile expires 2027-11-19 and the certificate 2027-11-18; the lane blocks o
 4. **Gemini parameters**: `thinkingLevel`, `mediaResolution`, temperature guidance for Gemini 3.x. Decide on the evaluation set.
 5. **GoogleSignIn 10.1.0 nonce API**: exact method signature. **TODO**.
 6. **modernc FTS5**: **Done**: FTS5 is compiled in (`TestFTS5Available`).
-7. **FDC details**: exact download file names and SHA-256; energy nutrient numbers (1008/2047/2048). **TODO**.
+7. **FDC details**: **Done**: see `datasets.lock` and §7.1.
 8. **Port and CPU architecture** of the VM; DNS record for `health-api.gumpw.com`. **TODO**.
 9. **Go module path**: **Done**: `github.com/wanggang316/health-assistant/server`.
 10. **Unconfirmed recognitions**: proposal is to delete them and their photos after 7 days. They are not evaluation pairs. **Decided (2026-11-22): delete after 7 days.**

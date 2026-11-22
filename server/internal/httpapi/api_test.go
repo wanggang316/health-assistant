@@ -19,6 +19,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/wanggang316/health-assistant/server/internal/auth"
 	"github.com/wanggang316/health-assistant/server/internal/auth/authtest"
+	"github.com/wanggang316/health-assistant/server/internal/nutrition/nutritiontest"
 	"github.com/wanggang316/health-assistant/server/internal/store"
 )
 
@@ -54,7 +55,7 @@ func newTestAPI(t *testing.T) *testAPI {
 		Store: st, Apple: auth.NewAppleVerifier(ctx, a.jwks.URL, bundleID), Google: auth.NewGoogleVerifier(ctx, a.jwks.URL, "gid"),
 		AppleAPI: nopApple{}, EncKey: make([]byte, 32), Log: log, Now: time.Now,
 	}
-	a.srv = httptest.NewServer(New(Deps{Store: st, Auth: svc, Log: log, Version: "abc123", RecognitionQuota: 30, Now: clock}))
+	a.srv = httptest.NewServer(New(Deps{Store: st, Auth: svc, Nutrition: nutritiontest.Open(t), Log: log, Version: "abc123", RecognitionQuota: 30, Now: clock}))
 	t.Cleanup(a.srv.Close)
 	return a
 }
@@ -321,5 +322,22 @@ func TestProfileUnder18HasNoTarget(t *testing.T) {
 	m := r.json(t)
 	if m["daily_target"] != nil || m["profile"] == nil {
 		t.Fatalf("me = %v", m)
+	}
+}
+
+func TestFoodSearch(t *testing.T) {
+	a := newTestAPI(t)
+	access, _ := a.signInApple()
+	r := a.do("GET", "/v1/foods/search?q=%E7%95%AA%E8%8C%84&limit=5", access, nil)
+	if r.status != 200 {
+		t.Fatalf("%d %s", r.status, r.body)
+	}
+	assertShape(t, r.body, "foods_search.json")
+	foods := r.json(t)["foods"].([]any)
+	if len(foods) != 1 || foods[0].(map[string]any)["fdc_id"] != float64(nutritiontest.Tomato) {
+		t.Fatalf("foods = %v", foods)
+	}
+	if code := errorCode(t, a.do("GET", "/v1/foods/search?q=", access, nil)); code != "invalid_request" {
+		t.Fatalf("empty q: %s", code)
 	}
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/wanggang316/health-assistant/server/internal/auth"
 	"github.com/wanggang316/health-assistant/server/internal/config"
 	"github.com/wanggang316/health-assistant/server/internal/httpapi"
+	"github.com/wanggang316/health-assistant/server/internal/nutrition"
 	"github.com/wanggang316/health-assistant/server/internal/store"
 )
 
@@ -82,6 +83,13 @@ func serve(cfg config.Config, log *slog.Logger) error {
 		log.Warn("database has migrations from a newer release", "versions", unknown)
 	}
 
+	nut, err := nutrition.Open(cfg.NutritionDBPath)
+	if err != nil {
+		return err
+	}
+	defer nut.Close()
+	log.Info("nutrition database", "version", nut.Version)
+
 	apple, err := auth.NewAppleClient(cfg.AppleTeamID, cfg.AppleBundleID, cfg.AppleSIWAKeyID, cfg.AppleSIWAPrivateKey)
 	if err != nil {
 		return err
@@ -98,7 +106,7 @@ func serve(cfg config.Config, log *slog.Logger) error {
 	srv := &http.Server{
 		Addr: cfg.ListenAddr,
 		Handler: httpapi.New(httpapi.Deps{
-			Store: st, Auth: svc, Log: log, Version: version, RecognitionQuota: cfg.RecognitionDailyQuota,
+			Store: st, Auth: svc, Nutrition: nut, Log: log, Version: version, RecognitionQuota: cfg.RecognitionDailyQuota,
 		}),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       60 * time.Second,

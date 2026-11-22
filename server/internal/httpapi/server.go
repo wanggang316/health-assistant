@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/wanggang316/health-assistant/server/internal/auth"
+	"github.com/wanggang316/health-assistant/server/internal/nutrition"
 	"github.com/wanggang316/health-assistant/server/internal/quota"
 	"github.com/wanggang316/health-assistant/server/internal/store"
 )
@@ -21,6 +22,7 @@ import (
 type Server struct {
 	store            *store.Store
 	auth             *auth.Service
+	nutrition        *nutrition.DB
 	log              *slog.Logger
 	version          string
 	recognitionQuota int
@@ -31,6 +33,7 @@ type Server struct {
 type Deps struct {
 	Store            *store.Store
 	Auth             *auth.Service
+	Nutrition        *nutrition.DB
 	Log              *slog.Logger
 	Version          string
 	RecognitionQuota int
@@ -42,7 +45,7 @@ func New(d Deps) http.Handler {
 	if d.Now == nil {
 		d.Now = time.Now
 	}
-	s := &Server{store: d.Store, auth: d.Auth, log: d.Log, version: d.Version, recognitionQuota: d.RecognitionQuota, now: d.Now}
+	s := &Server{store: d.Store, auth: d.Auth, nutrition: d.Nutrition, log: d.Log, version: d.Version, recognitionQuota: d.RecognitionQuota, now: d.Now}
 	mux := http.NewServeMux()
 	handle := func(pattern string, h func(http.ResponseWriter, *http.Request) error) {
 		mux.Handle(pattern, s.wrap(h))
@@ -59,6 +62,7 @@ func New(d Deps) http.Handler {
 	authed("POST /v1/auth/logout", s.authLogout)
 	authed("GET /v1/me", s.getMe)
 	authed("PUT /v1/me/profile", s.putProfile)
+	authed("GET /v1/foods/search", s.searchFoods)
 	handle("/", func(http.ResponseWriter, *http.Request) error { return errNotFound })
 	return s.accessLog(mux)
 }
