@@ -458,7 +458,7 @@ Notes:
 - **Recognition vs meal entry.** A recognition keeps the original model output (`model_output_json`) and the normalized result (`result_json`); it never changes. A meal entry has relational food items and ingredients, which the user can edit. `recognition_id` links them. `confirmed_snapshot_json` keeps the food items as first confirmed. The pair (recognition, current meal entry) and the snapshot are the evaluation data (ADR 0003, 0012). Deleting a meal entry deletes its recognition and meal photo (ADR 0007): the repository deletes them in the same transaction and queues the S3 key.
 - **Daily totals** are `SUM` over ingredients joined by `entry_date`. No stored totals.
 - **Daily target** is not stored. It is calculated from `profiles` (§8.1).
-- **Unconfirmed recognitions** and their photos are deleted after 7 days by a job (proposal, §13).
+- **Unconfirmed recognitions** and their photos are deleted after 7 days by a job.
 - **Staleness**: the repository sets `advice.stale = 1` in the same transaction as the change: create, update, or delete of a meal entry → daily summary of that `entry_date` (both dates if `entry_date` changes) and the meal feedback of that entry; profile change → all daily summaries and meal feedback of the user. As a second guard, the facts hash is compared on read (§8.3).
 
 `nutrition.db` (built by `cmd/fdcimport`, read-only):
@@ -871,7 +871,7 @@ Validation in Go (beyond the schema; the model may ignore unsupported keywords):
 ### 6.6 Cost guard
 
 - Recognition quota: 30 per user per day (`RECOGNITION_DAILY_QUOTA`). `quota_date` = local date of the request time with `meta.utc_offset_minutes` (clamped to −720…+840). The retry inside one request counts once. A failed recognition is refunded. A non-food result counts.
-- Global daily cap on recognition requests (`RECOGNITION_GLOBAL_DAILY_LIMIT`, UTC day). At the cap, return `503 model_unavailable` and log an error (nanops monitor sees it in the journal; no extra alerting in v1).
+- Global daily cap on recognition requests (`RECOGNITION_GLOBAL_DAILY_LIMIT`, UTC day). Default 500. At the cap, return `503 model_unavailable`, log an error, and send one Feishu alert per UTC day through `FEISHU_ALERT_WEBHOOK`.
 - `maxOutputTokens` 2048; one image per request; 2 MB photo limit.
 - Cost per call is logged from `usageMetadata`. Note the `gemini-3.8-flash` price doubles on 2027-01-01 (ADR 0001).
 
@@ -1176,7 +1176,8 @@ Stored in project-env `health-assistant/prod/env`, changed only by PR (nanops ru
 | `S3_BUCKET` | `health-assistant-prod-a7fe63` |
 | `TOKEN_ENCRYPTION_KEY` | 32 bytes base64 for Apple refresh tokens (secret) |
 | `RECOGNITION_DAILY_QUOTA` | `30` |
-| `RECOGNITION_GLOBAL_DAILY_LIMIT` | global cap per UTC day |
+| `RECOGNITION_GLOBAL_DAILY_LIMIT` | global cap per UTC day (default 500) |
+| `FEISHU_ALERT_WEBHOOK` | Feishu bot webhook for the cap alert |
 
 ### 10.5 activate.sh
 
@@ -1282,7 +1283,7 @@ The profile expires 2027-11-19 and the certificate 2027-11-18; the lane blocks o
 
 ## 13. Open questions and risks
 
-1. **Sign in with Apple key not created.** Needs a `.p8` key with Sign in with Apple for `com.gumpw.health-assistant`, its Key ID, and a project-env PR. Without it, token revocation on account deletion (App Store requirement) cannot work.
+1. **Sign in with Apple key not created.** Needs a `.p8` key with Sign in with Apple for `com.gumpw.health-assistant`, its Key ID, and a project-env PR. Without it, token revocation on account deletion (App Store requirement) cannot work. **Decided (2026-11-22): create the key.**
 2. **Apple server-to-server notification endpoint**: where to set it for an App ID without a Services ID. **TODO**.
 3. **Structured output field on the express endpoint**: `responseFormat` (new) vs `responseMimeType` + `responseSchema` (deprecated, documented). Spike in the first backend PR.
 4. **Gemini parameters**: `thinkingLevel`, `mediaResolution`, temperature guidance for Gemini 3.x. Decide on the evaluation set.
@@ -1291,14 +1292,14 @@ The profile expires 2027-11-19 and the certificate 2027-11-18; the lane blocks o
 7. **FDC details**: exact download file names and SHA-256; energy nutrient numbers (1008/2047/2048). **TODO**.
 8. **Port and CPU architecture** of the VM; DNS record for `health-api.gumpw.com`. **TODO**.
 9. **Go module path / GitHub repository** owner. **TODO**.
-10. **Unconfirmed recognitions**: proposal is to delete them and their photos after 7 days. They are not evaluation pairs. Confirm.
+10. **Unconfirmed recognitions**: proposal is to delete them and their photos after 7 days. They are not evaluation pairs. **Decided (2026-11-22): delete after 7 days.**
 11. **Data in backups after deletion**: `health.db` backups keep deleted users for up to 30 days. Needs a statement in the privacy policy. The photo bucket has versioning off (checked on 2026-11-22), so a delete removes the object.
-12. **Daily target history**: v1 compares past days with the current target. A profile change marks old summaries stale and rewrites them with the new target. Accept, or store target snapshots per day?
+12. **Daily target history**: v1 compares past days with the current target. A profile change marks old summaries stale and rewrites them with the new target. Accept, or store target snapshots per day? **Decided (2026-11-22): compare with the current target; no snapshots in v1.**
 13. **Targets for special cases**: age < 18 gets no target. Pregnancy cannot be detected; onboarding text must say targets are not for pregnancy or medical conditions (ADR 0010). Confirm the wording and whether to ask.
 14. **Quota day**: uses the local date from the request offset; a user can shift the offset to gain at most one extra day of quota. Accept.
-15. **Global cost cap value** (`RECOGNITION_GLOBAL_DAILY_LIMIT`) and an alert when it is reached. Price of `gemini-3.8-flash` doubles on 2027-01-01.
+15. **Global cost cap value** (`RECOGNITION_GLOBAL_DAILY_LIMIT`) and an alert when it is reached. Price of `gemini-3.8-flash` doubles on 2027-01-01. **Decided (2026-11-22): 500 recognitions per day; send a Feishu alert when the limit is reached.**
 16. **Alias table curation**: who writes the first ~300 zh/en rows and how they are reviewed.
-17. **No staging environment**: every main merge deploys production and TestFlight builds use production (ADR 0006). Risk: a bad migration reaches users at once. Mitigation: pre-migration copy, expand/contract rule, rollback in `activate.sh`.
+17. **No staging environment**: every main merge deploys production and TestFlight builds use production (ADR 0006). Risk: a bad migration reaches users at once. Mitigation: pre-migration copy, expand/contract rule, rollback in `activate.sh`. **Decided (2026-11-22): accept the risk; no staging in v1.**
 18. **Google Auth Platform in Testing**: only 100 listed test users. Publishing needs a home page, a privacy policy URL, and authorized domains.
 19. **App name** "Gump Health Assistant" is a working name; App Privacy labels and the privacy policy URL are not done.
 20. **Mainland China users** get slow or no service (ADR 0001). No mitigation in v1.
