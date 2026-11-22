@@ -12,8 +12,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/wanggang316/health-assistant/server/internal/advice"
 	"github.com/wanggang316/health-assistant/server/internal/auth"
 	"github.com/wanggang316/health-assistant/server/internal/localtime"
+	"github.com/wanggang316/health-assistant/server/internal/meals"
 	"github.com/wanggang316/health-assistant/server/internal/nutrition"
 	"github.com/wanggang316/health-assistant/server/internal/photo"
 	"github.com/wanggang316/health-assistant/server/internal/recognition"
@@ -27,6 +29,8 @@ type Server struct {
 	nutrition        *nutrition.DB
 	recognition      *recognition.Service
 	photos           photo.Storage
+	meals            *meals.Service
+	advice           *advice.Service
 	log              *slog.Logger
 	version          string
 	recognitionQuota int
@@ -40,6 +44,8 @@ type Deps struct {
 	Nutrition        *nutrition.DB
 	Recognition      *recognition.Service
 	Photos           photo.Storage
+	Meals            *meals.Service
+	Advice           *advice.Service
 	Log              *slog.Logger
 	Version          string
 	RecognitionQuota int
@@ -51,7 +57,7 @@ func New(d Deps) http.Handler {
 	if d.Now == nil {
 		d.Now = time.Now
 	}
-	s := &Server{store: d.Store, auth: d.Auth, nutrition: d.Nutrition, recognition: d.Recognition, photos: d.Photos, log: d.Log, version: d.Version, recognitionQuota: d.RecognitionQuota, now: d.Now}
+	s := &Server{store: d.Store, auth: d.Auth, nutrition: d.Nutrition, recognition: d.Recognition, photos: d.Photos, meals: d.Meals, advice: d.Advice, log: d.Log, version: d.Version, recognitionQuota: d.RecognitionQuota, now: d.Now}
 	mux := http.NewServeMux()
 	handle := func(pattern string, h func(http.ResponseWriter, *http.Request) error) {
 		mux.Handle(pattern, s.wrap(h))
@@ -72,6 +78,15 @@ func New(d Deps) http.Handler {
 	authed("GET /v1/foods/search", s.searchFoods)
 	authed("POST /v1/recognitions", s.createRecognition)
 	authed("GET /v1/recognitions/{id}", s.getRecognition)
+	authed("POST /v1/meal-entries", s.createMealEntry)
+	authed("GET /v1/meal-entries", s.listMealEntries)
+	authed("GET /v1/meal-entries/{id}", s.getMealEntry)
+	authed("PUT /v1/meal-entries/{id}", s.updateMealEntry)
+	authed("DELETE /v1/meal-entries/{id}", s.deleteMealEntry)
+	authed("GET /v1/meal-entries/{id}/feedback", s.mealFeedback)
+	authed("GET /v1/days", s.listDays)
+	authed("GET /v1/days/{date}", s.getDay)
+	authed("GET /v1/days/{date}/summary", s.getDaySummary)
 	handle("/", func(http.ResponseWriter, *http.Request) error { return errNotFound })
 	return s.accessLog(mux)
 }

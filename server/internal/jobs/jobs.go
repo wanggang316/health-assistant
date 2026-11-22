@@ -52,6 +52,9 @@ func (r *Runner) Once(ctx context.Context) {
 	} else if n > 0 {
 		r.Log.Info("cleanup sessions", "deleted", n)
 	}
+	if err := r.Store.DeleteOldIdempotencyKeys(ctx, now.Add(-24*time.Hour)); err != nil {
+		r.Log.Error("cleanup idempotency keys", "err", err)
+	}
 	keys, err := r.Store.PendingPhotoDeletions(ctx, 200)
 	if err != nil {
 		r.Log.Error("photo deletions", "err", err)

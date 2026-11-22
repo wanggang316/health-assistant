@@ -15,12 +15,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/wanggang316/health-assistant/server/internal/advice"
 	"github.com/wanggang316/health-assistant/server/internal/alert"
 	"github.com/wanggang316/health-assistant/server/internal/auth"
 	"github.com/wanggang316/health-assistant/server/internal/config"
 	"github.com/wanggang316/health-assistant/server/internal/gemini"
 	"github.com/wanggang316/health-assistant/server/internal/httpapi"
 	"github.com/wanggang316/health-assistant/server/internal/jobs"
+	"github.com/wanggang316/health-assistant/server/internal/meals"
 	"github.com/wanggang316/health-assistant/server/internal/nutrition"
 	"github.com/wanggang316/health-assistant/server/internal/photo"
 	"github.com/wanggang316/health-assistant/server/internal/recognition"
@@ -123,12 +125,14 @@ func serve(cfg config.Config, log *slog.Logger) error {
 		QuotaLimit: cfg.RecognitionDailyQuota, GlobalLimit: cfg.RecognitionGlobalDailyLimit,
 		Log: log, Now: time.Now,
 	}
+	mealSvc := &meals.Service{Store: st, Nutrition: nut, Now: time.Now}
+	adviceSvc := &advice.Service{Store: st, Nutrition: nut, Gemini: gem, Model: cfg.GeminiTextModel, Log: log, Now: time.Now}
 	go (&jobs.Runner{Store: st, Photos: photos, Log: log, Now: time.Now}).Run(ctx)
 
 	srv := &http.Server{
 		Addr: cfg.ListenAddr,
 		Handler: httpapi.New(httpapi.Deps{
-			Store: st, Auth: svc, Nutrition: nut, Recognition: rec, Photos: photos, Log: log, Version: version, RecognitionQuota: cfg.RecognitionDailyQuota,
+			Store: st, Auth: svc, Nutrition: nut, Recognition: rec, Photos: photos, Meals: mealSvc, Advice: adviceSvc, Log: log, Version: version, RecognitionQuota: cfg.RecognitionDailyQuota,
 		}),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       60 * time.Second,

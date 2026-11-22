@@ -1,0 +1,36 @@
+{
+  "id": "0193b2c3-7c3d-7e4f-8a9b-0c1d2e3f4a61",
+  "source": "recognition",
+  "recognition_id": "0193a1b2-7c3d-7e4f-8a9b-0c1d2e3f4a60",
+  "meal_type": "lunch",
+  "eaten_at": "2026-11-22T04:12:00Z",
+  "utc_offset_minutes": 480,
+  "entry_date": "2026-11-22",
+  "photo_url": "https://health-assistant-prod-a7fe63.s3.us-east-1.amazonaws.com/meal-photos/u/p.jpg?X-Amz-Expires=900",
+  "food_items": [
+    {
+      "id": "0193b2c3-7c3d-7e4f-8a9b-0c1d2e3f4a62",
+      "name_zh": "番茄炒蛋",
+      "name_en": "Tomato and egg stir-fry",
+      "cooking_method": "stir_fried",
+      "needs_gram_check": false,
+      "ingredients": [
+        {
+          "id": "0193b2c3-7c3d-7e4f-8a9b-0c1d2e3f4a63",
+          "name_zh": "番茄",
+          "name_en": "tomato, raw",
+          "grams": 180,
+          "fdc_id": 170457,
+          "fdc_description": "Tomatoes, red, ripe, raw, year round average",
+          "is_cooking_oil": false,
+          "match_method": "alias",
+          "nutrients": { "kcal": 32.4, "protein_g": 1.6, "fat_g": 0.4, "carb_g": 7, "fiber_g": 2.2, "sodium_mg": 9 }
+        }
+      ],
+      "nutrients": { "kcal": 32.4, "protein_g": 1.6, "fat_g": 0.4, "carb_g": 7, "fiber_g": 2.2, "sodium_mg": 9 }
+    }
+  ],
+  "nutrients": { "kcal": 32.4, "protein_g": 1.6, "fat_g": 0.4, "carb_g": 7, "fiber_g": 2.2, "sodium_mg": 9 },
+  "created_at": "2026-11-22T04:13:10Z",
+  "updated_at": "2026-11-22T04:13:10Z"
+}

@@ -19,8 +19,10 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/wanggang316/health-assistant/server/internal/advice"
 	"github.com/wanggang316/health-assistant/server/internal/auth"
 	"github.com/wanggang316/health-assistant/server/internal/auth/authtest"
+	"github.com/wanggang316/health-assistant/server/internal/meals"
 	"github.com/wanggang316/health-assistant/server/internal/nutrition"
 	"github.com/wanggang316/health-assistant/server/internal/nutrition/nutritiontest"
 	"github.com/wanggang316/health-assistant/server/internal/recognition"
@@ -49,14 +51,15 @@ func (a *recordingApple) Revoke(_ context.Context, rt string) error {
 }
 
 type testAPI struct {
-	t      *testing.T
-	srv    *httptest.Server
-	jwks   *authtest.JWKS
-	now    time.Time
-	gem    *fakeGemini
-	photos *memPhotos
-	apple  *recordingApple
-	store  *store.Store
+	t         *testing.T
+	srv       *httptest.Server
+	jwks      *authtest.JWKS
+	now       time.Time
+	gem       *fakeGemini
+	photos    *memPhotos
+	apple     *recordingApple
+	store     *store.Store
+	adviceGem *fakeGemini
 }
 
 func newTestAPI(t *testing.T) *testAPI {
@@ -84,8 +87,11 @@ func newTestAPI(t *testing.T) *testAPI {
 		Matcher:    &nutrition.Matcher{DB: nut, Cache: st, Log: log},
 		QuotaLimit: 30, GlobalLimit: 500, Log: log, Now: clock,
 	}
+	a.adviceGem = &fakeGemini{}
+	mealSvc := &meals.Service{Store: st, Nutrition: nut, Now: clock}
+	adv := &advice.Service{Store: st, Nutrition: nut, Gemini: a.adviceGem, Model: "lite", Log: log, Now: clock}
 	a.srv = httptest.NewServer(New(Deps{Store: st, Auth: svc, Nutrition: nut, Recognition: rec, Photos: a.photos,
-		Log: log, Version: "abc123", RecognitionQuota: 30, Now: clock}))
+		Meals: mealSvc, Advice: adv, Log: log, Version: "abc123", RecognitionQuota: 30, Now: clock}))
 	t.Cleanup(a.srv.Close)
 	return a
 }
