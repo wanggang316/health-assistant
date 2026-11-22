@@ -1,0 +1,11 @@
+{
+  "user": {
+    "id": "0193a1b2-7c3d-7e4f-8a9b-0c1d2e3f4a5b",
+    "provider": "apple",
+    "display_name": null,
+    "email": null
+  },
+  "profile": null,
+  "daily_target": null,
+  "recognition_quota": { "limit": 30, "used": 0, "resets_at": "2026-11-22T16:00:00Z" }
+}

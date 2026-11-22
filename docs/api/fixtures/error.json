@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "invalid_identity_token",
+    "message": "Identity token check failed.",
+    "details": { "reason": "nonce" }
+  },
+  "request_id": "0193a1b2-7c3d-7e4f-8a9b-0c1d2e3f4a5c"
+}

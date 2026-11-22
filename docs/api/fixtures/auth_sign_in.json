@@ -1,0 +1,13 @@
+{
+  "access_token": "ha_at_q8Zr2mW1dE0yH7pXo3T9b4LkNcVfA6sJuGiR5eQtBwY",
+  "access_expires_at": "2026-11-22T09:15:00Z",
+  "refresh_token": "ha_rt_Xc7yP0aM3nB8vL2kJ6hG4fD1sQ9wE5rT0uI8oZ3pA2s",
+  "refresh_expires_at": "2027-01-21T08:15:00Z",
+  "user": {
+    "id": "0193a1b2-7c3d-7e4f-8a9b-0c1d2e3f4a5b",
+    "provider": "apple",
+    "display_name": "Gang Wang",
+    "email": "x@privaterelay.appleid.com",
+    "has_profile": false
+  }
+}
