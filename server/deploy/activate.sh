@@ -52,6 +52,8 @@ if [[ -n "$DB" && -f "$DB" ]]; then
   sqlite3 "$DB" ".backup '$BACKUP_DIR/pre-$RELEASE_NAME.db'"
   # shellcheck disable=SC2012
   ls -1t "$BACKUP_DIR"/pre-*.db 2>/dev/null | tail -n +$((KEEP + 1)) | xargs -r rm -f
+  # The privacy policy promises that backups expire within 30 days.
+  find "$BACKUP_DIR" -name 'pre-*.db' -mtime +30 -delete
 fi
 
 log "Running migrations"
