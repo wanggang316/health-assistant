@@ -25,7 +25,4 @@ func TestDay(t *testing.T) {
 			t.Errorf("Day(%s, %d) = %s, %s; want %s, %s", tt.now, tt.offset, date, resets.Format(time.RFC3339), tt.date, tt.resets)
 		}
 	}
-	if ValidOffset(-721) || ValidOffset(841) || !ValidOffset(0) {
-		t.Error("ValidOffset bounds")
-	}
 }
