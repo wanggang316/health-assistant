@@ -1,0 +1,141 @@
+name: HealthAssistant
+options:
+  bundleIdPrefix: com.gumpw
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "6.0"
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+
+packages:
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: "9.0.0"
+
+targets:
+  HealthAssistant:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: HealthAssistant
+    dependencies:
+      - package: GoogleSignIn
+        product: GoogleSignIn
+      - package: GoogleSignIn
+        product: GoogleSignInSwift
+    entitlements:
+      path: HealthAssistant/HealthAssistant.entitlements
+      properties:
+        com.apple.developer.applesignin: [Default]
+    info:
+      path: HealthAssistant/Info.plist
+      properties:
+        CFBundleDisplayName: "$(APP_DISPLAY_NAME)"
+        CFBundleName: HealthAssistant
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, zh-Hans]
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSCameraUsageDescription: "Take a photo of your meal to log it."
+        GIDClientID: 425467050521-4qi7lq179gc5ljikm4r1iat7c0iqd6ud.apps.googleusercontent.com
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - com.googleusercontent.apps.425467050521-4qi7lq179gc5ljikm4r1iat7c0iqd6ud
+        APIBaseURL: "$(API_BASE_URL)"
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        # Only OS-provided encryption (HTTPS, Keychain).
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.gumpw.health-assistant
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: HC438T2B8P
+        APP_DISPLAY_NAME: Health Assistant
+        LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+        SWIFT_EMIT_LOC_STRINGS: YES
+      configs:
+        Debug:
+          API_BASE_URL: "http:/$()/127.0.0.1:3140"
+        Release:
+          API_BASE_URL: "https:/$()/health-api.gumpw.com"
+          EXCLUDED_SOURCE_FILE_NAMES: SampleMeal.jpg
+
+  HealthAssistantTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: HealthAssistantTests
+      - path: ../docs/api/fixtures
+        buildPhase: resources
+        type: folder
+    dependencies:
+      - target: HealthAssistant
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.gumpw.health-assistant.tests
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: HC438T2B8P
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/HealthAssistant.app/HealthAssistant"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
+  HealthAssistantUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: HealthAssistantUITests
+    dependencies:
+      - target: HealthAssistant
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.gumpw.health-assistant.uitests
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: HC438T2B8P
+        TEST_TARGET_NAME: HealthAssistant
+
+schemes:
+  HealthAssistant:
+    build:
+      targets:
+        HealthAssistant: all
+        HealthAssistantTests: [test]
+        HealthAssistantUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - HealthAssistantTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+  HealthAssistantE2E:
+    build:
+      targets:
+        HealthAssistant: all
+        HealthAssistantUITests: [test]
+    test:
+      config: Debug
+      targets:
+        - HealthAssistantUITests

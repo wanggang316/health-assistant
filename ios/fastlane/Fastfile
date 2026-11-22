@@ -1,0 +1,377 @@
+# frozen_string_literal: true
+
+# TestFlight release for the Health Assistant iOS app. Run only from the
+# ios-testflight workflow on main, or by hand with the same env vars.
+#
+# The lanes use only existing signing material (an Apple Distribution
+# certificate with its private key and an App Store provisioning profile) and
+# an existing internal TestFlight group. They never create or repair
+# certificates, profiles, apps or groups, and never submit for review.
+
+require "digest"
+require "fileutils"
+require "open3"
+require "securerandom"
+require "shellwords"
+require "plist"
+require_relative "lib/testflight_release"
+
+default_platform(:ios)
+
+TR = TestflightRelease
+IOS_DIR = File.expand_path("..", __dir__)
+PROJECT = File.join(IOS_DIR, "HealthAssistant.xcodeproj")
+INFO_PLIST = File.join(IOS_DIR, "HealthAssistant/Info.plist")
+OUTPUT_ROOT = File.join(IOS_DIR, "build/testflight")
+SIGNING_DIR = ENV.fetch("HA_SIGNING_DIR") { File.join(IOS_DIR, "build/signing") }
+SUMMARY_PATH = ENV.fetch("HA_SUMMARY_PATH") { File.join(OUTPUT_ROOT, "summary.json") }
+KEYCHAIN_NAME = "health-assistant-release.keychain-db"
+PROFILE_DIRS = [
+  File.expand_path("~/Library/MobileDevice/Provisioning Profiles"),
+  File.expand_path("~/Library/Developer/Xcode/UserData/Provisioning Profiles")
+].freeze
+POLL_SECONDS = 60
+
+$summary = {}
+$installed_profiles = []
+# Set once upload is attempted (or when rechecking). After that, an unexpected
+# error must preserve the same build for read-only recheck.
+$after_upload = false
+
+def summary_set(fields)
+  $summary.merge!(fields)
+  FileUtils.mkdir_p(File.dirname(SUMMARY_PATH))
+  TR.write_summary(SUMMARY_PATH, $summary)
+end
+
+def require_env!(*names)
+  missing = names.select { |n| ENV[n].to_s.strip.empty? }
+  TR.blocked!("Missing secrets or variables: #{missing.join(', ')}.") if missing.any?
+end
+
+def read_plist(path)
+  xml = sh("plutil", "-convert", "xml1", "-o", "-", path, log: false)
+  Plist.parse_xml(xml)
+end
+
+def cleanup_signing
+  keychain = File.expand_path("~/Library/Keychains/#{KEYCHAIN_NAME}")
+  if File.exist?(keychain)
+    sh("security", "delete-keychain", keychain, log: false) rescue nil
+  end
+  $installed_profiles.each { |p| FileUtils.rm_f(p) }
+  FileUtils.rm_rf(SIGNING_DIR)
+end
+
+# --- App Store Connect -------------------------------------------------------
+
+def asc_login
+  require_env!("ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_P8_BASE64")
+  app_store_connect_api_key(
+    key_id: ENV["ASC_KEY_ID"],
+    issuer_id: ENV["ASC_ISSUER_ID"],
+    key_content: ENV["ASC_KEY_P8_BASE64"],
+    is_key_content_base64: true,
+    in_house: false
+  )
+end
+
+def asc_app
+  begin
+    apps = Spaceship::ConnectAPI::App.all(filter: { bundleId: TR::BUNDLE_ID })
+  rescue StandardError => e
+    # The first App Store Connect call: a bad key or a missing role fails here.
+    TR.blocked!("App Store Connect rejected the first query (#{e.class}): #{e.message.to_s[0, 200]}. Check the ASC_* secrets and the key role.")
+  end
+  found = TR.check_single_app!(apps.map { |a| { bundle_id: a.bundle_id, app: a } })
+  summary_set("App / 团队" => "#{TR::BUNDLE_ID} / #{TR::TEAM_ID}（ASC app #{found[:app].id}，唯一）")
+  found[:app]
+end
+
+def asc_internal_group(app)
+  groups = app.get_beta_groups.map do |g|
+    { name: g.name, internal: g.is_internal_group, all_builds: g.has_access_to_all_builds, group: g }
+  end
+  found = TR.select_internal_group!(groups, ENV["TESTFLIGHT_INTERNAL_GROUP"])
+  summary_set("内部组" => "#{found[:name]}（access to all builds: #{found[:all_builds] ? 'yes' : 'no'}）")
+  found
+end
+
+def asc_build_numbers(app)
+  Spaceship::ConnectAPI::Build.all(app_id: app.id, limit: 200).map(&:version)
+end
+
+def asc_check_marketing_version(app, plist_version)
+  trains = Spaceship::ConnectAPI.get_pre_release_versions(filter: { app: app.id, platform: "IOS" })
+                                .all_pages.flat_map(&:to_models).map(&:version)
+  versions = app.get_app_store_versions(filter: { platform: "IOS" }).map do |v|
+    { version: v.version_string, state: v.app_version_state || v.app_store_state }
+  end
+  TR.check_marketing_version!(plist_version: plist_version, pre_release_versions: trains, app_store_versions: versions)
+  UI.message("ASC TestFlight versions: #{trains.uniq.sort.join(', ').then { |s| s.empty? ? 'none' : s }}")
+end
+
+def find_build(app, build_number)
+  Spaceship::ConnectAPI::Build.all(app_id: app.id, version: TR::MARKETING_VERSION, build_number: build_number.to_s).first
+end
+
+# Poll the same build until it is visible in the group, fails, or the wait
+# ends. Never uploads. Raises TR::Stop unless the build is visible.
+def wait_for_build(app, group, build_number, wait_minutes:, add_to_group: false)
+  deadline = Time.now + (wait_minutes * 60)
+  loop do
+    build = find_build(app, build_number)
+    detail = build&.build_beta_detail
+    in_group = build ? group[:group].fetch_builds.any? { |b| b.id == build.id } : false
+    status = TR.build_status(
+      processing_state: build&.processing_state,
+      internal_state: detail&.internal_build_state,
+      in_group: in_group,
+      group_all_builds: group[:all_builds]
+    )
+    summary_set(
+      "ASC build" => build ? "#{build.id}（#{TR::MARKETING_VERSION} (#{build_number})）" : "未确认（ASC 尚未列出）",
+      "ASC 处理状态" => "processing=#{build&.processing_state || 'unknown'}, internal=#{detail&.internal_build_state || 'unknown'}",
+      "内部组可见性" => in_group ? "#{group[:name]} 已列出该 build" : "#{group[:name]} 未列出该 build",
+      "核查时间" => TR.beijing_time,
+      "阶段" => TR::STAGES[TR.stage_for(status)]
+    )
+
+    case status
+    when :done
+      UI.success("Build #{build_number} is processed and listed in internal group #{group[:name]}.")
+      return
+    when :failed
+      raise TR::Stop.new(:failed, "App Store Connect processing failed for build #{build_number}: " \
+                                  "processing=#{build&.processing_state}, internal=#{detail&.internal_build_state}.")
+    when :needs_group_decision
+      unless add_to_group
+        raise TR::Stop.new(:processed_group_pending,
+                           "Build #{build_number} is processed, but internal group #{group[:name]} does not have access " \
+                           "to all builds and does not list it. Adding the build changes the group's builds; " \
+                           "Gump decides. To add it, run the workflow with mode=recheck and add_build_to_group=true.")
+      end
+      UI.important("Adding build #{build_number} to internal group #{group[:name]} as requested by add_build_to_group.")
+      build.add_beta_groups(beta_groups: [group[:group]])
+      add_to_group = false
+      next
+    end
+
+    if Time.now >= deadline
+      raise TR::Stop.new(TR.stage_for(status),
+                         "Waited #{wait_minutes} minutes; build #{build_number} is not visible yet. " \
+                         "Do not upload again. Run the workflow with mode=recheck and build_number=#{build_number}.")
+    end
+    UI.message("Build #{build_number}: #{status}; checking again in #{POLL_SECONDS}s.")
+    sleep(POLL_SECONDS)
+  end
+end
+
+# --- Signing (existing material only) ---------------------------------------
+
+def decode_secret_to_file(env_name, path)
+  File.binwrite(path, ENV[env_name].to_s.unpack1("m"))
+  File.chmod(0o600, path)
+rescue ArgumentError
+  TR.blocked!("Secret #{env_name} is not valid base64.")
+end
+
+def prepare_signing
+  require_env!("IOS_DIST_CERT_P12_BASE64", "IOS_DIST_CERT_PASSWORD", "IOS_APPSTORE_PROFILE_BASE64")
+  FileUtils.mkdir_p(SIGNING_DIR, mode: 0o700)
+  cert_path = File.join(SIGNING_DIR, "dist.p12")
+  profile_path = File.join(SIGNING_DIR, "appstore.mobileprovision")
+  decode_secret_to_file("IOS_DIST_CERT_P12_BASE64", cert_path)
+  decode_secret_to_file("IOS_APPSTORE_PROFILE_BASE64", profile_path)
+
+  keychain_password = SecureRandom.hex(24)
+  create_keychain(name: KEYCHAIN_NAME, password: keychain_password, default_keychain: false,
+                  unlock: true, timeout: 3600, lock_when_sleeps: false, add_to_search_list: true)
+  begin
+    import_certificate(certificate_path: cert_path, certificate_password: ENV["IOS_DIST_CERT_PASSWORD"],
+                       keychain_name: KEYCHAIN_NAME, keychain_password: keychain_password, log_output: false)
+  rescue StandardError
+    TR.blocked!("Could not import IOS_DIST_CERT_P12_BASE64 with IOS_DIST_CERT_PASSWORD (wrong password or not a .p12).")
+  end
+  keychain = File.expand_path("~/Library/Keychains/#{KEYCHAIN_NAME}")
+  identity = TR.select_distribution_identity!(
+    sh("security", "find-identity", "-v", "-p", "codesigning", keychain, log: false)
+  )
+
+  profile_xml = sh("security", "cms", "-D", "-i", profile_path, log: false)
+  profile = Plist.parse_xml(profile_xml)
+  TR.blocked!("IOS_APPSTORE_PROFILE_BASE64 is not a provisioning profile.") unless profile.is_a?(Hash)
+  cert_sha1s = Array(profile["DeveloperCertificates"]).map do |data|
+    Digest::SHA1.hexdigest(data.respond_to?(:read) ? data.read : data.to_s).upcase
+  end
+  checked = TR.check_profile!(profile, profile_cert_sha1s: cert_sha1s, identity_sha1: identity[:sha1])
+
+  PROFILE_DIRS.each do |dir|
+    FileUtils.mkdir_p(dir)
+    target = File.join(dir, "#{checked[:uuid]}.mobileprovision")
+    FileUtils.cp(profile_path, target)
+    $installed_profiles << target
+  end
+
+  summary_set("签名" => "#{identity[:name]}；profile #{checked[:name]}（到期 #{TR.beijing_time(checked[:expires_at])}）")
+  { identity: identity, profile: checked, keychain: keychain }
+end
+
+# Verify actual signed products before upload. Extracted public certificates
+# stay in SIGNING_DIR and follow the existing cleanup paths.
+def signing_output(*command)
+  stdout, _stderr, status = Open3.capture3(*command)
+  TR.blocked!("Artifact #{command.first} check failed (exit #{status.exitstatus}). Nothing was uploaded.") unless status.success?
+  stdout
+end
+
+def verify_artifact(app_path, signing, build_number:, label:)
+  checked = TR.verify_bundle_plist!(read_plist(File.join(app_path, "Info.plist")),
+                                  build_number: build_number, label: label)
+  unless File.exist?(File.join(app_path, "PrivacyInfo.xcprivacy"))
+    raise TR::Stop.new(:failed, "#{label} has no PrivacyInfo.xcprivacy. Nothing was uploaded.")
+  end
+  signing_output("codesign", "--verify", "--strict", app_path)
+  entitlements = Plist.parse_xml(signing_output("codesign", "-d", "--entitlements", ":-", app_path))
+  profile = Plist.parse_xml(signing_output("security", "cms", "-D", "-i", File.join(app_path, "embedded.mobileprovision")))
+  unless entitlements.is_a?(Hash) && profile.is_a?(Hash)
+    TR.blocked!("#{label} signing entitlements or embedded profile could not be decoded.")
+  end
+  cert_prefix = File.join(SIGNING_DIR, "#{label}-cert-")
+  signing_output("codesign", "-d", "--extract-certificates", cert_prefix, app_path)
+  cert_sha1s = Array(profile["DeveloperCertificates"]).map do |data|
+    Digest::SHA1.hexdigest(data.respond_to?(:read) ? data.read : data.to_s).upcase
+  end
+  TR.verify_signature!(entitlements: entitlements, profile: profile, profile_cert_sha1s: cert_sha1s,
+                       signed_cert_sha1: Digest::SHA1.file("#{cert_prefix}0").hexdigest,
+                       identity_sha1: signing[:identity][:sha1])
+  summary_set("#{label} 签名" => "#{TR::TEAM_ID}.#{TR::BUNDLE_ID}；实际证书与所选身份、嵌入 App Store profile 一致")
+  checked
+end
+
+# --- Lanes -------------------------------------------------------------------
+
+platform :ios do
+  before_all do
+    summary_set(
+      "阶段" => TR::STAGES[:blocked],
+      "源码 SHA" => ENV["HA_SOURCE_SHA"] || sh("git", "rev-parse", "HEAD", log: false).strip,
+      "运行链接" => ENV["HA_RUN_URL"] || "local",
+      "错误" => "无"
+    )
+  end
+
+  desc "Build the main SHA, upload it to TestFlight once, and wait until the existing internal group lists it"
+  lane :release do
+    # Report every missing name at once, before any App Store Connect call.
+    require_env!("ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_P8_BASE64", "TESTFLIGHT_INTERNAL_GROUP",
+                 "IOS_DIST_CERT_P12_BASE64", "IOS_DIST_CERT_PASSWORD", "IOS_APPSTORE_PROFILE_BASE64")
+    asc_login
+    app = asc_app
+    group = asc_internal_group(app)
+
+    source_plist = read_plist(INFO_PLIST)
+    asc_check_marketing_version(app, source_plist["CFBundleShortVersionString"])
+    signing = prepare_signing
+
+    build_number = TR.next_build_number(asc_build_numbers(app), floor: source_plist["CFBundleVersion"].to_i).to_s
+    summary_set("版本 / build" => "预定 #{TR::MARKETING_VERSION} (#{build_number})")
+
+    # Change the CI working copy only. This is never committed or pushed.
+    sh("/usr/libexec/PlistBuddy", "-c", "Set :CFBundleVersion #{build_number}", INFO_PLIST, log: false)
+
+    output_dir = File.join(OUTPUT_ROOT, build_number)
+    archive_path = File.join(output_dir, "HealthAssistant.xcarchive")
+    profile_name = signing[:profile][:name]
+    build_app(
+      project: PROJECT,
+      scheme: "HealthAssistant",
+      configuration: "Release",
+      clean: true,
+      archive_path: archive_path,
+      output_directory: output_dir,
+      output_name: "HealthAssistant.ipa",
+      export_method: "app-store",
+      skip_profile_detection: true,
+      export_options: {
+        method: "app-store",
+        signingStyle: "manual",
+        teamID: TR::TEAM_ID,
+        signingCertificate: signing[:identity][:sha1],
+        provisioningProfiles: { TR::BUNDLE_ID => profile_name },
+        manageAppVersionAndBuildNumber: false,
+        uploadSymbols: true
+      },
+      xcargs: [
+        "CODE_SIGN_STYLE=Manual",
+        "DEVELOPMENT_TEAM=#{TR::TEAM_ID}",
+        "CODE_SIGN_IDENTITY=#{signing[:identity][:sha1]}",
+        "PROVISIONING_PROFILE_SPECIFIER=#{profile_name.shellescape}",
+        "OTHER_CODE_SIGN_FLAGS=--keychain=#{signing[:keychain].shellescape}"
+      ].join(" ")
+    )
+
+    archived = verify_artifact(File.join(archive_path, "Products/Applications/HealthAssistant.app"), signing,
+                               build_number: build_number, label: "Archive")
+    ipa = File.join(output_dir, "HealthAssistant.ipa")
+    extract_dir = File.join(output_dir, "ipa")
+    FileUtils.rm_rf(extract_dir)
+    sh("ditto", "-x", "-k", ipa, extract_dir, log: false)
+    exported = verify_artifact(File.join(extract_dir, "Payload/HealthAssistant.app"), signing,
+                               build_number: build_number, label: "IPA")
+    summary_set(
+      "归档实际值" => "#{archived[:version]} (#{archived[:build]})",
+      "导出实际值" => "#{exported[:version]} (#{exported[:build]})，含 PrivacyInfo.xcprivacy 与 ITSAppUsesNonExemptEncryption"
+    )
+
+    # Another run may have uploaded while this one was building.
+    TR.check_build_number_free!(build_number, asc_build_numbers(app))
+
+    # Once an upload is attempted, even an exception may mean ASC accepted it.
+    # Preserve the same build for read-only recheck; never imply a retry is safe.
+    $after_upload = true
+    summary_set("阶段" => TR::STAGES[:uploaded_pending],
+                "已完成操作" => "已归档、已导出；上传结果未确认，只读复查同一 build，不重传")
+    upload_to_testflight(
+      ipa: ipa,
+      app_platform: "ios",
+      skip_waiting_for_build_processing: true,
+      skip_submission: true,
+      distribute_external: false,
+      notify_external_testers: false
+    )
+    $after_upload = true
+    summary_set("阶段" => TR::STAGES[:uploaded_pending], "已完成操作" => "已归档、已导出、已上传（ASC 已接受上传）")
+
+    wait_for_build(app, group, build_number, wait_minutes: ENV.fetch("HA_WAIT_MINUTES", "20").to_i)
+  end
+
+  desc "Read-only check of one uploaded build; never uploads"
+  lane :recheck do |options|
+    build_number = options[:build_number].to_s
+    TR.blocked!("Give build_number for mode=recheck.") unless build_number.match?(/\A\d+\z/)
+    $after_upload = true
+    summary_set("版本 / build" => "复查 #{TR::MARKETING_VERSION} (#{build_number})", "已完成操作" => "只读复查，未上传")
+    asc_login
+    app = asc_app
+    group = asc_internal_group(app)
+    wait_for_build(app, group, build_number,
+                   wait_minutes: ENV.fetch("HA_WAIT_MINUTES", "30").to_i,
+                   add_to_group: options[:add_build_to_group].to_s == "true")
+  end
+
+  after_all do
+    summary_set("阶段" => TR::STAGES[:done])
+    cleanup_signing
+  end
+
+  error do |_lane, exception|
+    stage_label =
+      if exception.is_a?(TR::Stop) then TR::STAGES[exception.stage]
+      elsif $after_upload then $summary["阶段"]
+      else TR::STAGES[:failed]
+      end
+    summary_set("阶段" => stage_label, "错误" => exception.message.to_s[0, 600])
+    cleanup_signing
+  end
+end
