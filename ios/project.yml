@@ -39,8 +39,8 @@ targets:
       properties:
         CFBundleDisplayName: "$(APP_DISPLAY_NAME)"
         CFBundleName: HealthAssistant
-        CFBundleShortVersionString: "$(MARKETING_VERSION)"
-        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
         CFBundleDevelopmentRegion: en
         CFBundleLocalizations: [en, zh-Hans]
         UILaunchScreen:
