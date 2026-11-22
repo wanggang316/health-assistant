@@ -48,3 +48,16 @@ Credentials: `~/.config/aws/s3/health-assistant-prod-s3.env`.
 |---|---|
 | API domain | `health-api.gumpw.com` |
 | Host | nanops VM (DigitalOcean) |
+| Port | `127.0.0.1:3140`, unit `health-assistant-api.service`, Caddy snippet `health-assistant.caddy` |
+| DNS | Cloudflare A record → VM, DNS only, comment `nanops:health-assistant` |
+| Runtime env | project-env `health-assistant/prod/env` (added in project-env PR #21) |
+| Privacy policy | `https://health-api.gumpw.com/privacy` (served by the API) |
+
+## GitHub Actions
+
+| Workflow | Needs |
+|---|---|
+| `server-deploy` | secrets `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` |
+| `ios-testflight` | secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8_BASE64`, `IOS_DIST_CERT_P12_BASE64`, `IOS_DIST_CERT_PASSWORD`, `IOS_APPSTORE_PROFILE_BASE64`; variable `TESTFLIGHT_INTERNAL_GROUP` |
+
+`scripts/setup-ci-secrets.sh` sets all of them from the local files. `scripts/testflight-local.sh` runs the same release lane from this Mac.
