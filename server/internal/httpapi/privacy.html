@@ -1,72 +1,149 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hans">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacy policy · Health Assistant</title>
+<title>隐私政策 Privacy policy · 健康助手 Health Assistant</title>
 <style>
-  body { font: 16px/1.6 -apple-system, "PingFang SC", sans-serif; color: #1E2A24; background: #F5F7F2; margin: 0; }
+  body { font: 16px/1.65 -apple-system, "PingFang SC", sans-serif; color: #1E2A24; background: #F5F7F2; margin: 0; }
   main { max-width: 680px; margin: 0 auto; padding: 32px 20px 64px; }
-  h1 { font-size: 28px; } h2 { font-size: 19px; margin-top: 28px; color: #2F7D5B; }
-  hr { border: 0; border-top: 1px solid #E3EEDD; margin: 40px 0; }
+  h1 { font-size: 28px; margin-bottom: 4px; } h2 { font-size: 19px; margin-top: 30px; color: #2F7D5B; }
+  nav { margin: 12px 0 8px; } nav a { color: #2F7D5B; }
+  hr { border: 0; border-top: 1px solid #E3EEDD; margin: 48px 0; }
   small { color: #56635C; }
+  td, th { text-align: left; vertical-align: top; padding: 6px 10px 6px 0; border-bottom: 1px solid #E3EEDD; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
 </style>
 </head>
 <body>
 <main>
-<h1>Privacy policy</h1>
-<small>Effective 2026-11-23. Applies to the Health Assistant iOS app and its server at health-api.gumpw.com.</small>
+<nav><a href="#zh">中文</a> · <a href="#en">English</a></nav>
 
-<h2>What we collect</h2>
+<section id="zh" lang="zh-Hans">
+<h1>隐私政策</h1>
+<small>生效日期：2026-11-23。适用于“健康助手”（Health Assistant）iOS App 及其服务器 health-api.gumpw.com。</small>
+
+<p>健康助手由个人开发者（下称“我们”）开发和运营。本政策说明我们收集哪些数据、为什么收集、交给谁处理、保存多久，以及你如何删除。</p>
+
+<h2>我们收集的数据</h2>
 <ul>
-  <li>Sign-in data: the account identifier from Sign in with Apple or Google, and the name and email that the provider gives.</li>
-  <li>Profile: sex, birth year, height, weight, activity level, goal, and macro split, if you enter them.</li>
-  <li>Meals: the meal photos you send, the recognized foods, the meal entries you save, and the health advice text made for them.</li>
+  <li><b>登录信息</b>：通过 Apple 或 Google 登录时，对方提供的账户标识，以及你同意共享的姓名和邮箱（使用 Apple“隐藏邮件地址”时，我们只会收到转发地址）。我们不会获得你的 Apple 或 Google 密码。</li>
+  <li><b>个人资料</b>：你主动填写的性别、出生年份、身高、体重、活动水平、目标和三大营养素比例，用于计算每日目标。</li>
+  <li><b>饮食数据</b>：你拍摄或选择并上传的餐食照片、识别出的菜品与食材、你保存或修改的饮食记录，以及为其生成的饮食建议文字。</li>
+  <li><b>技术日志</b>：服务器记录请求时间、IP 地址、请求路径、错误信息和账户内部编号，用于排查故障和防止滥用。</li>
 </ul>
-<p>We do not use advertising, tracking, or analytics SDKs, and we do not sell data.</p>
+<p>App 只在你主动拍照或选择照片时访问相机或相册，只上传你选中的那一张。照片在上传前会在手机上重新压缩，上传后服务器会再次重新编码，去除位置（GPS）等全部元数据。</p>
+<p>我们不使用任何广告、追踪或统计分析 SDK，不做跨 App 追踪，不出售或出租任何数据，也不把数据用于广告。</p>
 
-<h2>How we use it</h2>
-<p>Only to run the app: recognize foods in a photo, calculate nutrients, keep your log, and write general diet feedback. Meal photos are sent to Google Vertex AI (Gemini) for recognition; Google processes them for this request. Advice text is written by the same service from calculated facts.</p>
+<h2>我们如何使用数据</h2>
+<p>只用于提供 App 本身的功能：识别照片中的食物、计算营养与热量、保存和展示你的饮食记录、计算每日目标，以及生成一般性的饮食建议。我们不会用你的数据训练模型。</p>
+<p>通过 Google 登录获得的信息（账户标识、姓名、邮箱）只用于创建和识别你的账户，不会转交给其他方，也不会用于上述用途以外的目的。我们对 Google 用户数据的使用遵守 <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>，包括其中的 Limited Use 要求。</p>
 
-<h2>Where it is stored</h2>
-<p>Account and meal data are stored on our server (DigitalOcean, United States). Meal photos are stored in Amazon S3 (us-east-1), encrypted at rest, and are shown to you only through links that expire after 15 minutes.</p>
+<h2>处理数据的第三方服务</h2>
+<table>
+  <tr><th>服务</th><th>用途</th><th>涉及的数据</th></tr>
+  <tr><td>Google Cloud Vertex AI（Gemini）</td><td>识别照片中的食物；根据规则算出的结论撰写建议文字</td><td>餐食照片；菜品名称、营养统计与目标数值（不含姓名和邮箱）</td></tr>
+  <tr><td>Amazon Web Services S3（美国 us-east-1）</td><td>存储餐食照片和加密的数据库备份</td><td>照片、备份</td></tr>
+  <tr><td>DigitalOcean（美国）</td><td>运行服务器和数据库</td><td>上述全部数据</td></tr>
+  <tr><td>Apple、Google</td><td>登录</td><td>登录信息</td></tr>
+</table>
+<p>按照 Google Cloud 条款，Google 只为返回结果而处理发送给 Vertex AI 的内容，不会用它训练模型。除上表和法律要求外，我们不会向任何人提供你的数据。</p>
 
-<h2>Retention and deletion</h2>
+<h2>存储与安全</h2>
+<p>数据存储在美国。所有传输都使用 HTTPS 加密。照片在 S3 上静态加密且不公开，App 只能通过 15 分钟后失效的临时链接查看。登录凭证在手机上存放于系统钥匙串。</p>
+
+<h2>保存期限</h2>
 <ul>
-  <li>A photo that you do not confirm as a meal entry is deleted after 7 days.</li>
-  <li>Deleting a meal entry deletes its photo.</li>
-  <li>Deleting your account (Me → Delete account) deletes all your data and photos at once and revokes the Sign in with Apple link. Database backups keep deleted data for up to 30 days, then it is gone.</li>
+  <li>识别后没有保存为饮食记录的照片和识别结果：7 天后自动删除。</li>
+  <li>饮食记录与照片：一直保存到你删除这条记录或删除账户。</li>
+  <li>删除账户：立即删除你的账户、资料、全部饮食记录和照片，并撤销 Apple 登录授权。</li>
+  <li>数据库备份：最长保留 30 天后自动删除，所以已删除的数据最迟 30 天后从备份中消失。</li>
+  <li>含 IP 地址的访问日志：最长保留 30 天。应用日志只记录账户内部编号，不含姓名、邮箱、照片或饮食内容。</li>
 </ul>
 
-<h2>Not medical advice</h2>
-<p>Nutrition values are estimates. The app gives general diet information, not medical advice.</p>
+<h2>你的权利</h2>
+<ul>
+  <li>在 App 中随时查看、修改或删除个人资料和每一条饮食记录。</li>
+  <li>在“我的 → 删除账户”中删除账户和全部数据，无需联系我们。</li>
+  <li>如需导出数据副本或有其他请求，请发邮件联系我们，我们会在 30 天内回复。</li>
+</ul>
 
-<h2>Contact</h2>
-<p>Use the support link on the App Store page of the app.</p>
+<h2>未成年人</h2>
+<p>本 App 不面向 13 岁以下儿童，我们不会有意收集其个人信息。如发现此类情况，请联系我们删除。</p>
+
+<h2>健康声明</h2>
+<p>营养数值为估算值。App 提供一般性饮食信息，不构成医疗建议、诊断或治疗。如有健康问题，请咨询医生或注册营养师。</p>
+
+<h2>政策变更</h2>
+<p>本政策变更时，我们会更新本页面和生效日期。</p>
+
+<h2>联系我们</h2>
+<p>邮箱：<a href="mailto:gumpwang2016@gmail.com">gumpwang2016@gmail.com</a></p>
+</section>
 
 <hr>
 
-<h1>隐私政策</h1>
-<small>生效日期 2026-11-23。适用于 Health Assistant iOS App 及其服务器 health-api.gumpw.com。</small>
-<h2>我们收集什么</h2>
+<section id="en" lang="en">
+<h1>Privacy policy</h1>
+<small>Effective 2026-11-23. Applies to the Health Assistant (健康助手) iOS app and its server at health-api.gumpw.com.</small>
+
+<p>Health Assistant is made and run by an individual developer ("we"). This policy tells you which data we collect, why, who processes it, how long we keep it, and how you delete it.</p>
+
+<h2>Data we collect</h2>
 <ul>
-  <li>登录信息：Apple 或 Google 提供的账户标识，以及其提供的姓名和邮箱。</li>
-  <li>个人资料：你填写的性别、出生年份、身高、体重、活动水平、目标和三大营养素比例。</li>
-  <li>饮食数据：你上传的餐食照片、识别出的食物、你保存的饮食记录，以及为其生成的健康建议文字。</li>
+  <li><b>Sign-in data</b>: the account identifier from Sign in with Apple or Google, and the name and email that you agree to share. If you use Apple's Hide My Email, we get only the relay address. We never get your Apple or Google password.</li>
+  <li><b>Profile</b>: sex, birth year, height, weight, activity level, goal, and macro split, if you enter them. We use them to calculate your daily target.</li>
+  <li><b>Meals</b>: the meal photos that you take or choose and send, the recognized dishes and ingredients, the meal entries that you save or edit, and the diet advice text made for them.</li>
+  <li><b>Technical logs</b>: the server records request time, IP address, request path, errors, and an internal account number, to find faults and stop abuse.</li>
 </ul>
-<p>我们不使用广告、追踪或统计分析 SDK，也不出售数据。</p>
-<h2>如何使用</h2>
-<p>仅用于提供 App 功能：识别照片中的食物、计算营养、保存记录、生成一般性饮食反馈。餐食照片会发送到 Google Vertex AI（Gemini）进行识别。</p>
-<h2>存储位置</h2>
-<p>账户与饮食数据存储在我们的服务器（DigitalOcean，美国）；照片存储在 Amazon S3（us-east-1），静态加密，仅通过 15 分钟后失效的链接向你展示。</p>
-<h2>保留与删除</h2>
+<p>The app opens the camera or photo library only when you take or choose a photo, and it sends only that photo. The phone compresses the photo before upload, and the server encodes it again, which removes all metadata, including location (GPS).</p>
+<p>We use no advertising, tracking, or analytics SDKs. We do not track you across apps, we do not sell or rent data, and we do not use data for advertising.</p>
+
+<h2>How we use data</h2>
+<p>Only to run the app: recognize foods in a photo, calculate nutrients and energy, keep and show your meal log, calculate your daily target, and write general diet advice. We do not use your data to train models.</p>
+<p>We use the data from Google sign-in (account identifier, name, email) only to create and identify your account. We do not transfer it to others or use it for other purposes. Our use of Google user data follows the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+
+<h2>Third-party processors</h2>
+<table>
+  <tr><th>Service</th><th>Purpose</th><th>Data</th></tr>
+  <tr><td>Google Cloud Vertex AI (Gemini)</td><td>Recognize foods in photos; write advice text from facts that our rules calculate</td><td>Meal photos; dish names, nutrient totals, and targets (no name or email)</td></tr>
+  <tr><td>Amazon Web Services S3 (United States, us-east-1)</td><td>Store meal photos and encrypted database backups</td><td>Photos, backups</td></tr>
+  <tr><td>DigitalOcean (United States)</td><td>Run the server and database</td><td>All data above</td></tr>
+  <tr><td>Apple, Google</td><td>Sign-in</td><td>Sign-in data</td></tr>
+</table>
+<p>Under the Google Cloud terms, Google processes the content sent to Vertex AI only to return the result and does not use it to train models. We give your data to no one else, except when the law requires it.</p>
+
+<h2>Storage and security</h2>
+<p>Data is stored in the United States. All traffic uses HTTPS. Photos in S3 are encrypted at rest and are not public; the app shows them only through links that expire after 15 minutes. On the phone, sign-in tokens are kept in the system Keychain.</p>
+
+<h2>Retention</h2>
 <ul>
-  <li>未确认为饮食记录的照片在 7 天后删除。</li>
-  <li>删除一条饮食记录会同时删除其照片。</li>
-  <li>删除账户（我的 → 删除账户）会立即删除你的全部数据和照片，并撤销 Apple 登录授权。数据库备份最多保留已删除数据 30 天。</li>
+  <li>Photos and recognition results that you do not save as a meal entry: deleted automatically after 7 days.</li>
+  <li>Meal entries and their photos: kept until you delete the entry or your account.</li>
+  <li>Account deletion: deletes your account, profile, all meal entries, and all photos at once, and revokes the Sign in with Apple link.</li>
+  <li>Database backups: deleted automatically after at most 30 days, so deleted data leaves the backups within 30 days.</li>
+  <li>Access logs with IP addresses: kept for at most 30 days. Application logs record only the internal account number, not names, emails, photos, or meal content.</li>
 </ul>
-<h2>非医疗建议</h2>
-<p>营养数值为估算值。App 提供一般性饮食信息，不构成医疗建议。</p>
+
+<h2>Your rights</h2>
+<ul>
+  <li>See, edit, or delete your profile and each meal entry in the app at any time.</li>
+  <li>Delete your account and all data in Me → Delete account, without contacting us.</li>
+  <li>To get a copy of your data or for other requests, email us. We reply within 30 days.</li>
+</ul>
+
+<h2>Children</h2>
+<p>The app is not for children under 13, and we do not knowingly collect their personal data. If you find such data, contact us and we will delete it.</p>
+
+<h2>Health notice</h2>
+<p>Nutrition values are estimates. The app gives general diet information. It is not medical advice, diagnosis, or treatment. For health problems, ask a doctor or a registered dietitian.</p>
+
+<h2>Changes</h2>
+<p>When this policy changes, we update this page and the effective date.</p>
+
+<h2>Contact</h2>
+<p>Email: <a href="mailto:gumpwang2016@gmail.com">gumpwang2016@gmail.com</a></p>
+</section>
 </main>
 </body>
 </html>
