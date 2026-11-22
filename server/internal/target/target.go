@@ -1,7 +1,12 @@
 // Package target calculates the daily target from a profile (ADR 0010).
 package target
 
-import "math"
+import (
+	"math"
+	"time"
+
+	"github.com/wanggang316/health-assistant/server/internal/store"
+)
 
 // Profile is the input of the calculation.
 type Profile struct {
@@ -64,4 +69,12 @@ func Calculate(p Profile) (Daily, bool) {
 		FatG:     int(math.Round(kcal * float64(p.FatPct) / 900)),
 		CarbG:    int(math.Round(kcal * float64(p.CarbPct) / 400)),
 	}, true
+}
+
+// FromProfile calculates the daily target of a stored profile at now.
+func FromProfile(p store.Profile, now time.Time) (Daily, bool) {
+	return Calculate(Profile{
+		Sex: p.Sex, Age: now.Year() - p.BirthYear, HeightCm: p.HeightCm, WeightKg: p.WeightKg,
+		ActivityLevel: p.ActivityLevel, Goal: p.Goal, ProteinPct: p.ProteinPct, FatPct: p.FatPct, CarbPct: p.CarbPct,
+	})
 }
