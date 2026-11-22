@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy policy · Health Assistant</title>
+<style>
+  body { font: 16px/1.6 -apple-system, "PingFang SC", sans-serif; color: #1E2A24; background: #F5F7F2; margin: 0; }
+  main { max-width: 680px; margin: 0 auto; padding: 32px 20px 64px; }
+  h1 { font-size: 28px; } h2 { font-size: 19px; margin-top: 28px; color: #2F7D5B; }
+  hr { border: 0; border-top: 1px solid #E3EEDD; margin: 40px 0; }
+  small { color: #56635C; }
+</style>
+</head>
+<body>
+<main>
+<h1>Privacy policy</h1>
+<small>Effective 2026-11-23. Applies to the Health Assistant iOS app and its server at health-api.gumpw.com.</small>
+
+<h2>What we collect</h2>
+<ul>
+  <li>Sign-in data: the account identifier from Sign in with Apple or Google, and the name and email that the provider gives.</li>
+  <li>Profile: sex, birth year, height, weight, activity level, goal, and macro split, if you enter them.</li>
+  <li>Meals: the meal photos you send, the recognized foods, the meal entries you save, and the health advice text made for them.</li>
+</ul>
+<p>We do not use advertising, tracking, or analytics SDKs, and we do not sell data.</p>
+
+<h2>How we use it</h2>
+<p>Only to run the app: recognize foods in a photo, calculate nutrients, keep your log, and write general diet feedback. Meal photos are sent to Google Vertex AI (Gemini) for recognition; Google processes them for this request. Advice text is written by the same service from calculated facts.</p>
+
+<h2>Where it is stored</h2>
+<p>Account and meal data are stored on our server (DigitalOcean, United States). Meal photos are stored in Amazon S3 (us-east-1), encrypted at rest, and are shown to you only through links that expire after 15 minutes.</p>
+
+<h2>Retention and deletion</h2>
+<ul>
+  <li>A photo that you do not confirm as a meal entry is deleted after 7 days.</li>
+  <li>Deleting a meal entry deletes its photo.</li>
+  <li>Deleting your account (Me → Delete account) deletes all your data and photos at once and revokes the Sign in with Apple link. Database backups keep deleted data for up to 30 days, then it is gone.</li>
+</ul>
+
+<h2>Not medical advice</h2>
+<p>Nutrition values are estimates. The app gives general diet information, not medical advice.</p>
+
+<h2>Contact</h2>
+<p>Use the support link on the App Store page of the app.</p>
+
+<hr>
+
+<h1>隐私政策</h1>
+<small>生效日期 2026-11-23。适用于 Health Assistant iOS App 及其服务器 health-api.gumpw.com。</small>
+<h2>我们收集什么</h2>
+<ul>
+  <li>登录信息：Apple 或 Google 提供的账户标识，以及其提供的姓名和邮箱。</li>
+  <li>个人资料：你填写的性别、出生年份、身高、体重、活动水平、目标和三大营养素比例。</li>
+  <li>饮食数据：你上传的餐食照片、识别出的食物、你保存的饮食记录，以及为其生成的健康建议文字。</li>
+</ul>
+<p>我们不使用广告、追踪或统计分析 SDK，也不出售数据。</p>
+<h2>如何使用</h2>
+<p>仅用于提供 App 功能：识别照片中的食物、计算营养、保存记录、生成一般性饮食反馈。餐食照片会发送到 Google Vertex AI（Gemini）进行识别。</p>
+<h2>存储位置</h2>
+<p>账户与饮食数据存储在我们的服务器（DigitalOcean，美国）；照片存储在 Amazon S3（us-east-1），静态加密，仅通过 15 分钟后失效的链接向你展示。</p>
+<h2>保留与删除</h2>
+<ul>
+  <li>未确认为饮食记录的照片在 7 天后删除。</li>
+  <li>删除一条饮食记录会同时删除其照片。</li>
+  <li>删除账户（我的 → 删除账户）会立即删除你的全部数据和照片，并撤销 Apple 登录授权。数据库备份最多保留已删除数据 30 天。</li>
+</ul>
+<h2>非医疗建议</h2>
+<p>营养数值为估算值。App 提供一般性饮食信息，不构成医疗建议。</p>
+</main>
+</body>
+</html>

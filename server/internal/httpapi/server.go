@@ -50,6 +50,7 @@ type Deps struct {
 	Version          string
 	RecognitionQuota int
 	Now              func() time.Time
+	DevAuth          bool
 }
 
 // New returns the API handler.
@@ -71,6 +72,10 @@ func New(d Deps) http.Handler {
 	handle("POST /v1/auth/apple", s.authApple)
 	handle("POST /v1/auth/google", s.authGoogle)
 	handle("POST /v1/auth/refresh", s.authRefresh)
+	if d.DevAuth {
+		handle("POST /v1/auth/dev", s.authDev)
+	}
+	handle("GET /privacy", s.privacy)
 	authed("POST /v1/auth/logout", s.authLogout)
 	authed("GET /v1/me", s.getMe)
 	authed("PUT /v1/me/profile", s.putProfile)

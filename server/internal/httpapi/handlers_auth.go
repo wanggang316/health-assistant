@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	_ "embed"
 	"net/http"
 	"strings"
 	"time"
@@ -156,4 +157,28 @@ func (s *Server) authLogout(w http.ResponseWriter, r *http.Request) error {
 	}
 	w.WriteHeader(http.StatusNoContent)
 	return nil
+}
+
+func (s *Server) authDev(w http.ResponseWriter, r *http.Request) error {
+	var body struct {
+		Subject string `json:"subject"`
+	}
+	if err := decodeJSON(w, r, &body); err != nil {
+		return err
+	}
+	if body.Subject == "" {
+		return errInvalid("subject", "subject is required.")
+	}
+	res, err := s.auth.SignInDev(r.Context(), body.Subject, locale(r))
+	return s.writeSignIn(w, r, res, err)
+}
+
+//go:embed privacy.html
+var privacyHTML []byte
+
+func (s *Server) privacy(w http.ResponseWriter, _ *http.Request) error {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	_, err := w.Write(privacyHTML)
+	return err
 }

@@ -37,6 +37,10 @@ type Config struct {
 	RecognitionGlobalDailyLimit int
 	FeishuAlertWebhook          string
 	FeishuAlertSecret           string
+
+	// DevAuth enables POST /v1/auth/dev for local end-to-end tests. Never
+	// set it in production.
+	DevAuth bool
 }
 
 // Load reads the configuration from the environment. It returns an error that
@@ -104,6 +108,7 @@ func load(getenv func(string) string) (Config, error) {
 		RecognitionGlobalDailyLimit: integer("RECOGNITION_GLOBAL_DAILY_LIMIT", 500),
 		FeishuAlertWebhook:          str("FEISHU_ALERT_WEBHOOK", ""),
 		FeishuAlertSecret:           str("FEISHU_ALERT_SECRET", ""),
+		DevAuth:                     str("DEV_AUTH", "") == "1",
 	}
 	if c.TokenEncryptionKey != nil && len(c.TokenEncryptionKey) != 32 {
 		errs = append(errs, errors.New("TOKEN_ENCRYPTION_KEY must decode to 32 bytes"))

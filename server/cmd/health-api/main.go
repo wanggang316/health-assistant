@@ -132,7 +132,7 @@ func serve(cfg config.Config, log *slog.Logger) error {
 	srv := &http.Server{
 		Addr: cfg.ListenAddr,
 		Handler: httpapi.New(httpapi.Deps{
-			Store: st, Auth: svc, Nutrition: nut, Recognition: rec, Photos: photos, Meals: mealSvc, Advice: adviceSvc, Log: log, Version: version, RecognitionQuota: cfg.RecognitionDailyQuota,
+			Store: st, Auth: svc, Nutrition: nut, Recognition: rec, Photos: photos, Meals: mealSvc, Advice: adviceSvc, Log: log, Version: version, RecognitionQuota: cfg.RecognitionDailyQuota, DevAuth: cfg.DevAuth,
 		}),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       60 * time.Second,
@@ -142,6 +142,9 @@ func serve(cfg config.Config, log *slog.Logger) error {
 	errc := make(chan error, 1)
 	go func() { errc <- srv.ListenAndServe() }()
 	log.Info("listening", "addr", cfg.ListenAddr, "version", version)
+	if cfg.DevAuth {
+		log.Warn("developer sign-in is enabled; never use this setting in production")
+	}
 
 	select {
 	case err := <-errc:
