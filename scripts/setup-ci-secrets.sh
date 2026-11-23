@@ -10,7 +10,6 @@ set -euo pipefail
 
 REPO=wanggang316/health-assistant
 ASC=~/.config/appstoreconnect
-# The ASC_* secrets use the low-role CI key in $ASC/ci/, never the Admin key in $ASC/.
 SIGN=$ASC/signing/apple-distribution/20261119-141744
 PROFILE=$ASC/ios/projects/health-assistant/health-assistant-AppStore.mobileprovision
 what=${1:-all}

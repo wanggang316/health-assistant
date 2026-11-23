@@ -16,14 +16,9 @@ This file lists the external accounts and resources that the project uses. It co
 
 The app name "Health Assistant" is used by another developer. "Gump Health Assistant" is a working name; change it before App Store release.
 
-Local material: `~/.config/appstoreconnect/` and `~/.config/appstoreconnect/ios/projects/health-assistant/` (profile and the Sign in with Apple `.p8` key; Apple does not let you download the key again).
+Local material: `~/.config/appstoreconnect/` (shared API keys) and `~/.config/appstoreconnect/ios/projects/health-assistant/` (profile and the Sign in with Apple `.p8` key; Apple does not let you download the key again).
 
-There are two shared App Store Connect API team keys. Team keys cannot be limited to one app, so the role is the only limit:
-
-| Key | Role | Local path | Use |
-|---|---|---|---|
-| Admin | Admin | `~/.config/appstoreconnect/` | One-time setup from this Mac only: bundle IDs, certificates, profiles, TestFlight groups and testers. Never put it in CI. |
-| CI | Low role (uploads builds and reads TestFlight) | `~/.config/appstoreconnect/ci/` | The `ASC_*` secrets in CI and `scripts/testflight-local.sh`. |
+CI uses a low-role App Store Connect API key that can upload builds and read TestFlight. Do not put an Admin key in CI: team keys cannot be limited to one app, so an Admin key could change every app of the team.
 
 No API key can create an App Store Connect app; do this in the web portal.
 
