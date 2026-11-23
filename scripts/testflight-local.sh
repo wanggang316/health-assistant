@@ -4,11 +4,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/../ios"
 ASC=~/.config/appstoreconnect
+# Use the same low-role CI key as CI ($ASC/ci/), not the Admin key in $ASC/.
 SIGN=$ASC/signing/apple-distribution/20261119-141744
 
-ASC_KEY_ID=$(python3 -c 'import json,os;print(json.load(open(os.path.expanduser("~/.config/appstoreconnect/credentials.json")))["key_id"])')
-ASC_ISSUER_ID=$(python3 -c 'import json,os;print(json.load(open(os.path.expanduser("~/.config/appstoreconnect/credentials.json")))["issuer_id"])')
-ASC_KEY_P8_BASE64=$(base64 < "$ASC/api-key.p8" | tr -d '\n')
+ASC_KEY_ID=$(python3 -c 'import json,os;print(json.load(open(os.path.expanduser("~/.config/appstoreconnect/ci/credentials.json")))["key_id"])')
+ASC_ISSUER_ID=$(python3 -c 'import json,os;print(json.load(open(os.path.expanduser("~/.config/appstoreconnect/ci/credentials.json")))["issuer_id"])')
+ASC_KEY_P8_BASE64=$(base64 < "$ASC/ci/api-key.p8" | tr -d '\n')
 IOS_DIST_CERT_P12_BASE64=$(base64 < "$SIGN/distribution.p12" | tr -d '\n')
 IOS_DIST_CERT_PASSWORD=$(cat "$SIGN/distribution.p12.pass")
 IOS_APPSTORE_PROFILE_BASE64=$(base64 < "$ASC/ios/projects/health-assistant/health-assistant-AppStore.mobileprovision" | tr -d '\n')

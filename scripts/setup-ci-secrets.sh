@@ -10,6 +10,7 @@ set -euo pipefail
 
 REPO=wanggang316/health-assistant
 ASC=~/.config/appstoreconnect
+# The ASC_* secrets use the low-role CI key in $ASC/ci/, never the Admin key in $ASC/.
 SIGN=$ASC/signing/apple-distribution/20261119-141744
 PROFILE=$ASC/ios/projects/health-assistant/health-assistant-AppStore.mobileprovision
 what=${1:-all}
@@ -25,11 +26,11 @@ if [[ $what == all || $what == deploy ]]; then
 fi
 
 if [[ $what == all || $what == ios ]]; then
-  key_id=$(python3 -c 'import json,os;print(json.load(open(os.path.expanduser("~/.config/appstoreconnect/credentials.json")))["key_id"])')
-  issuer=$(python3 -c 'import json,os;print(json.load(open(os.path.expanduser("~/.config/appstoreconnect/credentials.json")))["issuer_id"])')
+  key_id=$(python3 -c 'import json,os;print(json.load(open(os.path.expanduser("~/.config/appstoreconnect/ci/credentials.json")))["key_id"])')
+  issuer=$(python3 -c 'import json,os;print(json.load(open(os.path.expanduser("~/.config/appstoreconnect/ci/credentials.json")))["issuer_id"])')
   set_value ASC_KEY_ID "$key_id"
   set_value ASC_ISSUER_ID "$issuer"
-  set_b64 ASC_KEY_P8_BASE64 "$ASC/api-key.p8"
+  set_b64 ASC_KEY_P8_BASE64 "$ASC/ci/api-key.p8"
   set_b64 IOS_DIST_CERT_P12_BASE64 "$SIGN/distribution.p12"
   set_value IOS_DIST_CERT_PASSWORD "$(cat "$SIGN/distribution.p12.pass")"
   set_b64 IOS_APPSTORE_PROFILE_BASE64 "$PROFILE"
