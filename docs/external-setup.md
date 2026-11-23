@@ -16,11 +16,7 @@ This file lists the external accounts and resources that the project uses. It co
 
 The app name "Health Assistant" is used by another developer. "Gump Health Assistant" is a working name; change it before App Store release.
 
-Local material: `~/.config/appstoreconnect/` (shared API keys) and `~/.config/appstoreconnect/ios/projects/health-assistant/` (profile and the Sign in with Apple `.p8` key; Apple does not let you download the key again).
-
-CI uses a low-role App Store Connect API key that can upload builds and read TestFlight. Do not put an Admin key in CI: team keys cannot be limited to one app, so an Admin key could change every app of the team.
-
-No API key can create an App Store Connect app; do this in the web portal.
+Local material: `~/.config/appstoreconnect/` (shared API key) and `~/.config/appstoreconnect/ios/projects/health-assistant/` (profile and the Sign in with Apple `.p8` key; Apple does not let you download the key again). No API key can create an App Store Connect app; do this in the web portal.
 
 ## Google Cloud
 
