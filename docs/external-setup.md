@@ -26,10 +26,11 @@ Local material: `~/.config/appstoreconnect/` (shared API key) and `~/.config/app
 | Gemini access | Vertex AI express mode API key, endpoint `https://aiplatform.googleapis.com/v1/publishers/google/models/<model>:generateContent` |
 | Models checked on 2026-11-22 | `gemini-3.8-flash`, `gemini-3.1-flash-lite` |
 
-| Google Auth Platform | App "Gump Health Assistant", user type External, publishing status Testing |
+| Google Auth Platform | App "Gump Health Assistant", user type External, publishing status In production (2026-11-23) |
+| Branding | Home page and privacy policy `https://health-api.gumpw.com/privacy`, authorized domain `gumpw.com`, support and developer email `gumpwang2016@gmail.com` |
 | iOS OAuth client | `health-assistant iOS`, client ID `425467050521-4qi7lq179gc5ljikm4r1iat7c0iqd6ud.apps.googleusercontent.com`, bundle ID `com.gumpw.health-assistant`, team `HC438T2B8P` |
 
-While the status is Testing, only listed test users can sign in with Google (at most 100). To publish, the Branding page needs a home page, a privacy policy URL, and authorized domains. The app uses only the `openid`, `email`, and `profile` scopes, which do not need Google verification.
+Any Google account can sign in. The app uses only the `openid`, `email`, and `profile` scopes, which do not need Google verification. Do not upload a logo or add sensitive scopes: either one makes Google verification necessary.
 
 The key is `GEMINI_API_KEY` in `~/.config/secrets.env`. It is restricted to the Vertex AI API, so the Gemini Developer API endpoint returns 403 with it.
 
